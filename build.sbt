@@ -5,7 +5,7 @@ import java.net.URL
 lazy val isomarcteOrg: String       = "io.isomarcte"
 lazy val projectName: String        = "sbt-version-scheme-enforcer"
 lazy val projectUrl: URL            = url("https://github.com/isomarcte/sbt-version-scheme-enforcer")
-lazy val scala212: String           = "2.12.13"
+lazy val scala212: String           = "2.12.12"
 lazy val scalaVersions: Set[String] = Set(scala212)
 
 // Groups //
@@ -38,11 +38,29 @@ lazy val sbtMimaPluginV: String    = "0.8.1"
 
 // ThisBuild //
 
+// General
+
 ThisBuild / organization := isomarcteOrg
 ThisBuild / scalafixDependencies ++= List(organizeImportsG %% organizeImportsA % organizeImportsV)
 ThisBuild / scalafixScalaBinaryVersion := scalaBinaryVersion.value
 ThisBuild / semanticdbEnabled := true
 ThisBuild / semanticdbVersion := scalafixSemanticdb.revision
+// We only publish on 2.12.x to keep in line with SBT, but it is assumed that
+// SBT will get to 2.13.x someday, so this ensures we stay up to date.
+ThisBuild / crossScalaVersions := scalaVersions.toSeq
+
+// GithubWorkflow
+
+ThisBuild / githubWorkflowPublishTargetBranches := Nil
+ThisBuild / githubWorkflowOSes := Set("macos-latest", "windows-latest", "ubuntu-latest").toList
+ThisBuild / githubWorkflowJavaVersions := Set("adopt@1.15", "adopt@1.11", "adopt@1.8").toList
+ThisBuild / githubWorkflowBuildPreamble :=
+  List(
+    WorkflowStep.Sbt(List("scalafmtSbtCheck", "scalafmtCheckAll")),
+    WorkflowStep.Run(List("sbt 'scalafixAll --check'")),
+    WorkflowStep.Sbt(List("doc"))
+  )
+ThisBuild / githubWorkflowBuildPostamble := List(WorkflowStep.Sbt(List("test:doc")))
 
 // Common Settings //
 
