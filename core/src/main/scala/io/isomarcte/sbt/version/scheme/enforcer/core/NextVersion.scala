@@ -1,8 +1,7 @@
 package io.isomarcte.sbt.version.scheme.enforcer.core
 
-import cats.data._
-import cats.syntax.all._
 import coursier.version._
+import io.isomarcte.sbt.version.scheme.enforcer.core.SafeEquals._
 
 object NextVersion {
 
@@ -46,16 +45,16 @@ object NextVersion {
         c <- currentVersion._3
       } yield versionChangeType match {
         case VersionChangeType.Major =>
-          NumericVersion.fromChain(NonEmptyChain.of(a, b + one, zero))
+          NumericVersion.fromVector(Vector(a, b + one, zero))
         case VersionChangeType.Minor =>
-          NumericVersion.fromChain(NonEmptyChain.of(a, b, c + one))
+          NumericVersion.fromVector(Vector(a, b, c + one))
         case VersionChangeType.Patch =>
           currentVersion
             ._4
             .fold(
               // The _very_ next version if there is no D component is A.B.C.0
-              NumericVersion.fromChain(NonEmptyChain.of(currentVersion._1, b, c, zero))
-            )(d => NumericVersion.fromChain(NonEmptyChain.of(currentVersion._1, b, c, d + one)))
+              NumericVersion.fromVector(Vector(currentVersion._1, b, c, zero))
+            )(d => NumericVersion.fromVector(Vector(currentVersion._1, b, c, d + one)))
       }
     ).getOrElse(invalidError)
   }
@@ -78,9 +77,9 @@ object NextVersion {
             if (currentVersion._1 === zero) {
               versionChangeType match {
                 case VersionChangeType.Major =>
-                  NumericVersion.fromChain(NonEmptyChain.of(currentVersion._1, b + one, zero))
+                  NumericVersion.fromVector(Vector(currentVersion._1, b + one, zero))
                 case VersionChangeType.Minor | VersionChangeType.Patch =>
-                  NumericVersion.fromChain(NonEmptyChain.of(currentVersion._1, b, c + one))
+                  NumericVersion.fromVector(Vector(currentVersion._1, b, c + one))
               }
             } else {
               minimumNextSemVerSpec(versionChangeType, currentVersion)
@@ -105,15 +104,15 @@ object NextVersion {
             c <- currentVersion._3
           } yield
             if (currentVersion._1 === zero) {
-              NumericVersion.fromChain(NonEmptyChain.of(currentVersion._1, b, c + one))
+              NumericVersion.fromVector(Vector(currentVersion._1, b, c + one))
             } else {
               versionChangeType match {
                 case VersionChangeType.Major =>
-                  NumericVersion.fromChain(NonEmptyChain.of(currentVersion._1 + one, zero, zero))
+                  NumericVersion.fromVector(Vector(currentVersion._1 + one, zero, zero))
                 case VersionChangeType.Minor =>
-                  NumericVersion.fromChain(NonEmptyChain.of(currentVersion._1, b + one, zero))
+                  NumericVersion.fromVector(Vector(currentVersion._1, b + one, zero))
                 case VersionChangeType.Patch =>
-                  NumericVersion.fromChain(NonEmptyChain.of(currentVersion._1, b, c + one))
+                  NumericVersion.fromVector(Vector(currentVersion._1, b, c + one))
               }
             }
         ).getOrElse(invalidError)

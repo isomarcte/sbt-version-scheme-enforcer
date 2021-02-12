@@ -1,7 +1,7 @@
 package io.isomarcte.sbt.version.scheme.enforcer.core
 
-import cats.syntax.all._
 import coursier.version._
+import io.isomarcte.sbt.version.scheme.enforcer.core.SafeEquals._
 
 sealed trait VersionChangeType extends Product with Serializable
 
@@ -11,19 +11,25 @@ object VersionChangeType {
   case object Patch extends VersionChangeType
 
   private[this] def pad(a: NumericVersion, b: NumericVersion): List[(Option[BigInt], Option[BigInt])] = {
-    val len: Int = scala.math.max(a.value.size, b.value.size).toInt
+    val len: Int = scala.math.max(a.asVector.size, b.asVector.size).toInt
 
-    (a.value.toList.map(_.pure[Option]).padTo(len, None).zip(b.value.toList.map(_.pure[Option]).padTo(len, None)))
+    (
+      a.asVector
+        .toList
+        .map(value => Some(value))
+        .padTo(len, None)
+        .zip(b.asVector.toList.map(value => Some(value)).padTo(len, None))
+    )
   }
 
   def fromPreviousAndNextVersion(
     versionCompatibility: VersionCompatibility
   )(previousVersion: Version, nextVersion: Version): Either[String, VersionChangeType] =
-    (NumericVersion.fromCoursierVersion(previousVersion), NumericVersion.fromCoursierVersion(nextVersion))
-      .tupled
-      .flatMap { case (previousVersion, nextVersion) =>
-        fromPreviousAndNextNumericVersion(versionCompatibility)(previousVersion, nextVersion)
-      }
+    for {
+      p      <- NumericVersion.fromCoursierVersion(previousVersion)
+      n      <- NumericVersion.fromCoursierVersion(nextVersion)
+      result <- fromPreviousAndNextNumericVersion(versionCompatibility)(p, n)
+    } yield result
 
   def fromPreviousAndNextNumericVersion(
     versionCompatibility: VersionCompatibility
