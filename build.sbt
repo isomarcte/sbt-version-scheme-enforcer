@@ -13,6 +13,7 @@ lazy val scalaVersions: Set[String] = Set(scala212)
 lazy val betterMonadicForG: String = "com.olegpy"
 lazy val coursierG: String         = "io.get-coursier"
 lazy val organizeImportsG          = "com.github.liancheng"
+lazy val typelevelG: String        = "org.typelevel"
 lazy val typesafeG: String         = "com.typesafe"
 
 // Artifacts //
