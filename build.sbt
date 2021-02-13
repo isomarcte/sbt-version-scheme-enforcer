@@ -28,7 +28,7 @@ lazy val sbtMimaPluginA: String    = "sbt-mima-plugin"
 
 lazy val betterMonadicForV: String = "0.3.1"
 lazy val coursierVersionsV: String = "0.3.0"
-lazy val kindProjectorV: String    = "0.11.2"
+lazy val kindProjectorV: String    = "0.11.3"
 lazy val organizeImportsV          = "0.4.4"
 lazy val sbtMimaPluginV: String    = "0.8.1"
 
@@ -49,7 +49,7 @@ ThisBuild / crossScalaVersions := scalaVersions.toSeq
 
 ThisBuild / githubWorkflowPublishTargetBranches := Nil
 ThisBuild / githubWorkflowOSes := Set("macos-latest", "windows-latest", "ubuntu-latest").toList
-ThisBuild / githubWorkflowJavaVersions := Set("adopt@1.15", "adopt@1.11", "adopt@1.8").toList
+ThisBuild / githubWorkflowJavaVersions := Set("adopt@1.11", "adopt@1.15", "adopt@1.8").toList
 ThisBuild / githubWorkflowBuildPreamble :=
   List(
     WorkflowStep.Sbt(List("scalafmtSbtCheck", "scalafmtCheckAll")),
@@ -57,6 +57,17 @@ ThisBuild / githubWorkflowBuildPreamble :=
     WorkflowStep.Sbt(List("doc"))
   )
 ThisBuild / githubWorkflowBuildPostamble := List(WorkflowStep.Sbt(List("test:doc")))
+ThisBuild / githubWorkflowBuildMatrixExclusions :=
+  List(
+    // For some reason the `githubWorkflowCheck` step gets stuck with this
+    // particular combination.
+    MatrixExclude(Map("os" -> "windows-latest"))
+  )
+ThisBuild / githubWorkflowBuildMatrixInclusions :=
+  List(
+    // Give windows a chance with the latest LTS JVM.
+    MatrixInclude(matching = Map("java" -> "adopt@1.11"), additions = Map("os" -> "windows-latest"))
+  )
 
 // Common Settings //
 
