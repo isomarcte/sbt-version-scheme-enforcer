@@ -1,57 +1,55 @@
 package io.isomarcte.sbt.version.scheme.enforcer.plugin
 
 import _root_.io.isomarcte.sbt.version.scheme.enforcer.core._
-import cats._
-import cats.effect._
-import cats.syntax.all._
 import coursier.version._
+import scala.util.Try
 
 private[plugin] object SbtVersionSchemeEnforcer {
-  def versionChangeTypeFromSchemeAndPreviousVersion[F[_]](
+  def versionChangeTypeFromSchemeAndPreviousVersion(
     scheme: Option[String],
     previousVersion: Option[String],
     nextVersion: String
-  )(implicit F: Sync[F]): F[VersionChangeType] =
+  ): Either[Throwable, VersionChangeType] = {
+    type ETV = Either[Throwable, VersionChangeType]
     previousVersion.fold(
-      F.raiseError[VersionChangeType](
+      Left(
         new RuntimeException(
           "versionSchemeEnforcerPreviousVersion is unset and/or could not be derived from VCS, e.g. git. In order to use sbt-version-scheme-enforcer-plugin this value must be set or derivable from VCS."
         )
-      )
+      ): Either[Throwable, VersionChangeType]
     )(previousVersion =>
-      (
-        schemeToVersionCompatibility(scheme),
-        versionToNumericVersion(previousVersion),
-        versionToNumericVersion(nextVersion)
-      ).tupled
-        .flatMap { case (scheme, previousVersion, nextVersion) =>
-          VersionChangeType
-            .fromPreviousAndNextNumericVersion(scheme)(previousVersion, nextVersion)
-            .fold(e => F.raiseError[VersionChangeType](new RuntimeException(e)), _.pure[F])
-        }
+      for {
+        s <- schemeToVersionCompatibility(scheme)
+        p <- versionToNumericVersion(previousVersion)
+        n <- versionToNumericVersion(nextVersion)
+        result <- VersionChangeType
+          .fromPreviousAndNextNumericVersion(s)(p, n)
+          .fold(e => Left(new RuntimeException(e)): ETV, value => Right(value): ETV)
+      } yield result
     )
+  }
 
-  def schemeToVersionCompatibility[F[_]](
-    scheme: Option[String]
-  )(implicit F: ApplicativeError[F, Throwable]): F[VersionCompatibility] =
+  def schemeToVersionCompatibility(scheme: Option[String]): Either[Throwable, VersionCompatibility] =
     scheme.fold(
-      F.raiseError[VersionCompatibility](
+      Left(
         new RuntimeException(
           """versionScheme is empty, unset or set in the incorrect scope. In order to use sbt-version-scheme-enforcer-plugin, you must set versionScheme to, "pvp", "early-semver", or "semver-spec", e.g. `ThisBuild / versionScheme := Some("pvp")`."""
         )
-      )
+      ): Either[Throwable, VersionCompatibility]
     )(scheme =>
       VersionCompatibility(scheme).fold(
-        F.raiseError[VersionCompatibility](
+        Left(
           new IllegalArgumentException(
             s"${scheme} is not a valid version scheme according to coursier.version.VersionCompatibility"
           )
-        )
-      )(_.pure[F])
+        ): Either[Throwable, VersionCompatibility]
+      )(value => Right(value))
     )
 
-  def versionToNumericVersion[F[_]](version: String)(implicit F: ApplicativeError[F, Throwable]): F[NumericVersion] =
-    F.fromEither(NumericVersion.fromCoursierVersion(Version(version)).leftMap(e => new IllegalArgumentException(e)))
+  def versionToNumericVersion(version: String): Either[Throwable, NumericVersion] =
+    NumericVersion
+      .fromCoursierVersion(Version(version))
+      .fold(e => Left(new IllegalArgumentException(e)), value => Right(value))
 
   private val command: Seq[String] = Seq("git", "--no-pager", "describe", "--abbrev=0", "@")
 
@@ -62,6 +60,6 @@ private[plugin] object SbtVersionSchemeEnforcer {
       value
     }
 
-  def previousTagFromGit[F[_]](implicit F: Sync[F]): F[Option[String]] =
-    F.delay(sys.process.Process(command, None).lineStream.headOption.map(normalizeVersion))
+  def previousTagFromGit: Either[Throwable, Option[String]] =
+    Try(sys.process.Process(command, None).lineStream.headOption.map(normalizeVersion)).toEither
 }

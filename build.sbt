@@ -19,8 +19,6 @@ lazy val typesafeG: String         = "com.typesafe"
 // Artifacts //
 
 lazy val betterMonadicForA: String = "better-monadic-for"
-lazy val catsCoreA: String         = "cats-core"
-lazy val catsEffectA: String       = "cats-effect"
 lazy val coursierVersionsA: String = "versions"
 lazy val kindProjectorA: String    = "kind-projector"
 lazy val organizeImportsA          = "organize-imports"
@@ -29,8 +27,6 @@ lazy val sbtMimaPluginA: String    = "sbt-mima-plugin"
 // Versions //
 
 lazy val betterMonadicForV: String = "0.3.1"
-lazy val catsCoreV: String         = "2.4.1"
-lazy val catsEffectV: String       = "2.3.1"
 lazy val coursierVersionsV: String = "0.3.0"
 lazy val kindProjectorV: String    = "0.11.3"
 lazy val organizeImportsV          = "0.4.4"
@@ -122,16 +118,12 @@ lazy val root: Project = (project in file("."))
 
 lazy val core: Project = project.settings(
   name := s"${projectName}-core",
-  libraryDependencies ++= List(coursierG %% coursierVersionsA % coursierVersionsV, typelevelG %% catsCoreA % catsCoreV)
+  libraryDependencies ++= List(coursierG %% coursierVersionsA % coursierVersionsV)
 )
 
 // Plugin //
 
 lazy val plugin: Project = project
-  .settings(
-    name := s"${projectName}-plugin",
-    addSbtPlugin(typesafeG % sbtMimaPluginA % sbtMimaPluginV),
-    libraryDependencies ++= List(typelevelG %% catsEffectA % catsEffectV)
-  )
+  .settings(name := s"${projectName}-plugin", addSbtPlugin(typesafeG % sbtMimaPluginA % sbtMimaPluginV))
   .enablePlugins(SbtPlugin)
   .dependsOn(core)

@@ -1,6 +1,5 @@
 package io.isomarcte.sbt.version.scheme.enforcer.plugin
 
-import cats.effect._
 import com.typesafe.tools.mima.plugin._
 import io.isomarcte.sbt.version.scheme.enforcer.core._
 import sbt.Keys._
@@ -18,7 +17,7 @@ object SbtVersionSchemeEnforcerPlugin extends AutoPlugin {
       versionSchemeEnforcerPreviousVersion := {
         val currentValue: Option[String] = versionSchemeEnforcerPreviousVersion.?.value.flatten
         if (currentValue.isEmpty) {
-          SbtVersionSchemeEnforcer.previousTagFromGit[SyncIO].attempt.unsafeRunSync.toOption.flatten
+          SbtVersionSchemeEnforcer.previousTagFromGit.toOption.flatten
         } else {
           currentValue
         }
@@ -31,10 +30,7 @@ object SbtVersionSchemeEnforcerPlugin extends AutoPlugin {
         val previousVersion: Option[String] = versionSchemeEnforcerPreviousVersion.value
         val currentVersion: String          = version.value
         val scheme: Option[String]          = versionScheme.?.value.flatten
-        SbtVersionSchemeEnforcer
-          .versionChangeTypeFromSchemeAndPreviousVersion[SyncIO](scheme, previousVersion, currentVersion)
-          .attempt
-          .unsafeRunSync
+        SbtVersionSchemeEnforcer.versionChangeTypeFromSchemeAndPreviousVersion(scheme, previousVersion, currentVersion)
       },
       versionSchemeCheck := {
         versionSchemeEnforcerChangeType
