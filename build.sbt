@@ -13,16 +13,25 @@ lazy val scalaVersions: Set[String] = Set(scala212)
 lazy val betterMonadicForG: String = "com.olegpy"
 lazy val coursierG: String         = "io.get-coursier"
 lazy val organizeImportsG          = "com.github.liancheng"
+lazy val scalaSbtG: String         = "org.scala-sbt"
 lazy val typelevelG: String        = "org.typelevel"
 lazy val typesafeG: String         = "com.typesafe"
 
 // Artifacts //
 
-lazy val betterMonadicForA: String = "better-monadic-for"
-lazy val coursierVersionsA: String = "versions"
-lazy val kindProjectorA: String    = "kind-projector"
-lazy val organizeImportsA          = "organize-imports"
-lazy val sbtMimaPluginA: String    = "sbt-mima-plugin"
+lazy val betterMonadicForA: String         = "better-monadic-for"
+lazy val coursierVersionsA: String         = "versions"
+lazy val kindProjectorA: String            = "kind-projector"
+lazy val organizeImportsA                  = "organize-imports"
+lazy val sbtA                              = "sbt"
+lazy val sbtCollectionsA: String           = "collections"
+lazy val sbtCoreMacrosA: String            = "core-macros"
+lazy val sbtLibraryManagementCoreA: String = "librarymanagement-core"
+lazy val sbtMainA                          = "main"
+lazy val sbtMainSettingsA                  = "main-settings"
+lazy val sbtMimaPluginA: String            = "sbt-mima-plugin"
+lazy val sbtTaskSystemA                    = "task-system"
+lazy val sbtUtilPositionA                  = "util-position"
 
 // Versions //
 
@@ -30,6 +39,7 @@ lazy val betterMonadicForV: String = "0.3.1"
 lazy val coursierVersionsV: String = "0.3.0"
 lazy val kindProjectorV: String    = "0.11.3"
 lazy val organizeImportsV          = "0.4.4"
+lazy val sbtLibraryManagementCoreV = "1.4.3"
 lazy val sbtMimaPluginV: String    = "0.8.1"
 
 // ThisBuild //
@@ -124,6 +134,21 @@ lazy val core: Project = project.settings(
 // Plugin //
 
 lazy val plugin: Project = project
-  .settings(name := s"${projectName}-plugin", addSbtPlugin(typesafeG % sbtMimaPluginA % sbtMimaPluginV))
+  .settings(
+    name := s"${projectName}-plugin",
+    addSbtPlugin(typesafeG % sbtMimaPluginA % sbtMimaPluginV),
+    libraryDependencies ++=
+      List(
+        coursierG %% coursierVersionsA         % coursierVersionsV,
+        scalaSbtG  % sbtA                      % sbtVersion.value,
+        scalaSbtG %% sbtCollectionsA           % sbtVersion.value,
+        scalaSbtG %% sbtCoreMacrosA            % sbtVersion.value,
+        scalaSbtG %% sbtLibraryManagementCoreA % sbtLibraryManagementCoreV,
+        scalaSbtG %% sbtMainA                  % sbtVersion.value,
+        scalaSbtG %% sbtMainSettingsA          % sbtVersion.value,
+        scalaSbtG %% sbtTaskSystemA            % sbtVersion.value,
+        scalaSbtG %% sbtUtilPositionA          % sbtVersion.value
+      )
+  )
   .enablePlugins(SbtPlugin)
   .dependsOn(core)
