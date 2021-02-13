@@ -79,4 +79,7 @@ object NumericVersion {
           .flatMap(NumericVersion.fromVector)
       )
   }
+
+  def unsafeFromCoursierVersion(value: Version): NumericVersion =
+    fromCoursierVersion(value).fold(e => throw new IllegalArgumentException(e), identity)
 }
