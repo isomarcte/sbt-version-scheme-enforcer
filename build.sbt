@@ -71,6 +71,7 @@ ThisBuild / githubWorkflowBuildPreamble :=
   List(
     WorkflowStep.Sbt(List("scalafmtSbtCheck", "scalafmtCheckAll")),
     WorkflowStep.Run(List("sbt 'scalafixAll --check'")),
+    WorkflowStep.Sbt(List("scripted")),
     WorkflowStep.Sbt(List("doc"))
   )
 ThisBuild / githubWorkflowBuildPostamble := List(WorkflowStep.Sbt(List("test:doc")))
@@ -156,7 +157,11 @@ lazy val plugin: Project = project
         scalaSbtG %% sbtMainSettingsA          % sbtVersion.value,
         scalaSbtG %% sbtTaskSystemA            % sbtVersion.value,
         scalaSbtG %% sbtUtilPositionA          % sbtVersion.value
-      )
+      ),
+    scriptedLaunchOpts := {
+      scriptedLaunchOpts.value ++ Seq("-Dplugin.version=" + version.value)
+    },
+    scriptedBufferLog := false
   )
   .enablePlugins(SbtPlugin)
   .dependsOn(core)
