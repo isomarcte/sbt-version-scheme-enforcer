@@ -49,6 +49,8 @@ lazy val sbtMimaPluginV: String    = "0.8.1"
 
 // General
 
+ThisBuild / scalacOptions ++= List("-target:jvm-1.8")
+
 ThisBuild / organization := isomarcteOrg
 ThisBuild / scalafixDependencies ++= List(organizeImportsG %% organizeImportsA % organizeImportsV)
 ThisBuild / scalafixScalaBinaryVersion := scalaBinaryVersion.value
