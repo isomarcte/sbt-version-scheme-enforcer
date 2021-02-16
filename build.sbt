@@ -1,49 +1,16 @@
+import _root_.io.isomarcte.sbt.version.scheme.enforcer.build.GAVs._
+import _root_.io.isomarcte.sbt.version.scheme.enforcer.build.JREMajorVersion
+import _root_.io.isomarcte.sbt.version.scheme.enforcer.build._
 import java.net.URL
 
 // Constants //
 
 lazy val isomarcteOrg: String       = "io.isomarcte"
+lazy val jreVersionForDocs: String  = JREMajorVersion.majorVersion
 lazy val projectName: String        = "sbt-version-scheme-enforcer"
 lazy val projectUrl: URL            = url("https://github.com/isomarcte/sbt-version-scheme-enforcer")
 lazy val scala212: String           = "2.12.12"
 lazy val scalaVersions: Set[String] = Set(scala212)
-
-// Groups //
-
-lazy val betterMonadicForG: String = "com.olegpy"
-lazy val coursierG: String         = "io.get-coursier"
-lazy val organizeImportsG          = "com.github.liancheng"
-lazy val scalaSbtG: String         = "org.scala-sbt"
-lazy val scalametaG: String        = "org.scalameta"
-lazy val typelevelG: String        = "org.typelevel"
-lazy val typesafeG: String         = "com.typesafe"
-
-// Artifacts //
-
-lazy val betterMonadicForA: String         = "better-monadic-for"
-lazy val coursierVersionsA: String         = "versions"
-lazy val kindProjectorA: String            = "kind-projector"
-lazy val munitA: String                    = "munit"
-lazy val organizeImportsA: String          = "organize-imports"
-lazy val sbtA: String                      = "sbt"
-lazy val sbtCollectionsA: String           = "collections"
-lazy val sbtCoreMacrosA: String            = "core-macros"
-lazy val sbtLibraryManagementCoreA: String = "librarymanagement-core"
-lazy val sbtMainA: String                  = "main"
-lazy val sbtMainSettingsA: String          = "main-settings"
-lazy val sbtMimaPluginA: String            = "sbt-mima-plugin"
-lazy val sbtTaskSystemA: String            = "task-system"
-lazy val sbtUtilPositionA: String          = "util-position"
-
-// Versions //
-
-lazy val betterMonadicForV: String = "0.3.1"
-lazy val coursierVersionsV: String = "0.3.0"
-lazy val kindProjectorV: String    = "0.11.3"
-lazy val munitV: String            = "0.7.21"
-lazy val organizeImportsV          = "0.4.4"
-lazy val sbtLibraryManagementCoreV = "1.4.3"
-lazy val sbtMimaPluginV: String    = "0.8.1"
 
 // ThisBuild //
 
@@ -87,6 +54,22 @@ ThisBuild / githubWorkflowBuildMatrixInclusions :=
     // Give windows a chance with the latest LTS JVM.
     MatrixInclude(matching = Map("java" -> "adopt@1.11"), additions = Map("os" -> "windows-latest"))
   )
+
+// Doc Settings //
+
+lazy val docSettings: List[Def.Setting[_]] = List(
+  apiURL := {
+    val moduleName: String = name.value
+    val org: String        = organization.value
+    Some(url(s"https://www.javadoc.io/doc/${org}/${moduleName}_${scalaBinaryVersion.value}/latest/index.html"))
+  },
+  autoAPIMappings := true,
+  Compile / doc / apiMappings ++= {
+    ScalaDocLinks.mappings(Seq((Compile / dependencyClasspathAsJars).value), scalaBinaryVersion.value) ++
+      ScalaDocLinks.jreModuleLinks(jreVersionForDocs)
+  },
+  Compile / doc / scalacOptions ++= List("-no-link-warnings") // JDK module linking is broken on 2.12.12
+)
 
 // Common Settings //
 
@@ -138,7 +121,8 @@ lazy val root: Project = (project in file("."))
 lazy val core: Project = project.settings(
   name := s"${projectName}-core",
   libraryDependencies ++= List(coursierG %% coursierVersionsA % coursierVersionsV) ++
-    List(scalametaG %% munitA % munitV).map(_ % Test)
+    List(scalametaG %% munitA % munitV).map(_ % Test),
+  docSettings
 )
 
 // Plugin //
