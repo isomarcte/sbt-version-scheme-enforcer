@@ -2,6 +2,12 @@ package io.isomarcte.sbt.version.scheme.enforcer.core
 
 import coursier.version._
 
+/** A representation of a version with only numeric components.
+  *
+  * @note This is ''not'' a general purpose version representation. It is
+  *       specifically tuned to the needs of calculating changes between
+  *       versions as they pertain to a supported versioning scheme.
+  */
 sealed trait NumericVersion {
   def head: BigInt
   def tail: Vector[BigInt]
@@ -29,6 +35,11 @@ object NumericVersion {
   final private[this] case class NumericVersionImpl(override val head: BigInt, override val tail: Vector[BigInt])
       extends NumericVersion
 
+  /** Create a [[NumericVersion]] from a [[scala.collections.Vector]] of [[scala.math.BigInt]] value.
+    *
+    * @note This will yield a `Left` value if any of the members are < 0 or if
+    *       the [[scala.collections.Vector]] is empty.
+    */
   def fromVector(value: Vector[BigInt]): Either[String, NumericVersion] =
     if (value.exists(_ < BigInt(0))) {
       Left(s"NumericVersion should only have non-negative version components: ${value}"): Either[String, NumericVersion]
@@ -40,14 +51,26 @@ object NumericVersion {
         )
     }
 
+  /** As [[#fromVector]], but throws on invalid input. Should not be used
+    * outside of toy code and the REPL.
+    */
   def unsafeFromVector(value: Vector[BigInt]): NumericVersion =
     fromVector(value).fold(e => throw new IllegalArgumentException(e), identity)
 
+  /** Create a [[NumericVersion]] from a [[java.lang.String]]. */
   def fromString(value: String): Either[String, NumericVersion] = fromCoursierVersion(Version(value))
 
+  /** As [[#fromString]], but throws on invalid input. Should not be used
+    * outside toy code and the REPL.
+    */
   def unsafeFromString(value: String): NumericVersion =
     fromString(value).fold(e => throw new IllegalArgumentException(e), identity)
 
+  /** Create a [[NumericVersion]] from a [[coursier.version.Version]].
+    *
+    * The [[coursier.version.Version]] may have a tag at the end,
+    * e.g. "1.0.0-SNAPSHOT", which will be removed.
+    */
   def fromCoursierVersion(value: Version): Either[String, NumericVersion] = {
     val reverseItems: Vector[Version.Item] = value.items.reverse
 

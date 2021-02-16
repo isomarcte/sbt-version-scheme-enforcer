@@ -4,6 +4,7 @@ import io.isomarcte.sbt.version.scheme.enforcer.core._
 import sbt._
 
 trait Keys {
+
   final val versionSchemeEnforcerPreviousVersion: SettingKey[Option[String]] = settingKey[Option[String]](
     "Previous version to compare against the current version for calculating binary compatibility"
   )

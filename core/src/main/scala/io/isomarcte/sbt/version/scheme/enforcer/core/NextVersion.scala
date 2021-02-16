@@ -3,11 +3,29 @@ package io.isomarcte.sbt.version.scheme.enforcer.core
 import coursier.version._
 import io.isomarcte.sbt.version.scheme.enforcer.core.SafeEquals._
 
+/** Functions for calculating the minimum next version for a given version scheme.
+  *
+  * @define errors Errors may occur if the given [[coursier.version.Version]]
+  *         is not a valid [[NumericVersion]], if the
+  *         [[coursier.version.VersionCompatibility]] is not one of the
+  *         supported values, or if the [[coursier.version.Version]] value is
+  *         invalid according to the version scheme as described by the
+  *         [[coursier.version.VersionCompatibility]],
+  *         e.g. [[coursier.version.VersionCompatibility.SemVerSpec]] versions
+  *         must always have three numeric components so "1.2.3.4" would be
+  *         invalid.
+  */
 object NextVersion {
 
   private val zero: BigInt = BigInt(0)
   private val one: BigInt  = BigInt(1)
 
+  /** Calculate the minimum next version from a given
+    * [[coursier.version.VersionCompatibility]] describing a version scheme, a
+    * [[VersionChangeType]], and a [[coursier.version.Version]].
+    *
+    * $errors
+    */
   def minimumNextVersion(
     versionCompatibility: VersionCompatibility
   )(versionChangeType: VersionChangeType, currentVersion: Version): Either[String, Version] =
@@ -16,6 +34,18 @@ object NextVersion {
       .flatMap(numericVersion => minimumNextNumericVersion(versionCompatibility)(versionChangeType, numericVersion))
       .map(_.asVersion)
 
+  /** As [[#minimumNextVersion]], but takes a [[java.lang.String]] rather than a
+    * [[coursier.version.Version]] for convenience.
+    */
+  def minimumNextVersionFromString(
+    versionCompatibility: VersionCompatibility
+  )(versionChangeType: VersionChangeType, currentVersion: String): Either[String, Version] =
+    minimumNextVersion(versionCompatibility)(versionChangeType, Version(currentVersion))
+
+  /** As [[#minimumNextVersion]], but takes a [[NumericVersion]] directly. This
+    * is sometimes more convenient if the [[coursier.version.Version]] has
+    * already been parsed into a [[NumericVersion]].
+    */
   def minimumNextNumericVersion(
     versionCompatibility: VersionCompatibility
   )(versionChangeType: VersionChangeType, currentVersion: NumericVersion): Either[String, NumericVersion] = {
@@ -31,6 +61,15 @@ object NextVersion {
     }
   }
 
+  /** Calculates the minimum next PVP version given the [[VersionChangeType]]
+    * and last released version.
+    *
+    * This is equivalent to
+    * `minimumNextNumericVersion(VersionCompatibility.PackVer)(versionChangeType,
+    * currentVersion)`.
+    *
+    * @see [[https://pvp.haskell.org/ Package version Policy]]
+    */
   def minimumNextPVP(
     versionChangeType: VersionChangeType,
     currentVersion: NumericVersion
@@ -59,6 +98,19 @@ object NextVersion {
     ).getOrElse(invalidError)
   }
 
+  /** Calculates the minimum next Early SemVer version given the [[VersionChangeType]]
+    * and last released version.
+    *
+    * @note AFAIK "Early SemVer" is not a formal versioning scheme and has no
+    *       formal documentation (if I'm wrong please open an issue or PR). It
+    *       is the same as SemVer with the exception that releases < 1.0.0
+    *       have specialized binary compatibility guarantees. Please see the
+    *       README for an overview.
+    *
+    * This is equivalent to
+    * `minimumNextNumericVersion(VersionCompatibility.EarlySemVer)(versionChangeType,
+    * currentVersion)`.
+    */
   def minimumNextEarlySemVer(
     versionChangeType: VersionChangeType,
     currentVersion: NumericVersion
@@ -88,6 +140,15 @@ object NextVersion {
       }(Function.const(invalidError))
   }
 
+  /** Calculates the minimum next SemVer version given the [[VersionChangeType]]
+    * and last released version.
+    *
+    * This is equivalent to
+    * `minimumNextNumericVersion(VersionCompatibility.SemVerSpec)(versionChangeType,
+    * currentVersion)`.
+    *
+    * @see [[https://semver.org/ SemVer]]
+    */
   def minimumNextSemVerSpec(
     versionChangeType: VersionChangeType,
     currentVersion: NumericVersion
