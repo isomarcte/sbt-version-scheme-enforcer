@@ -71,6 +71,7 @@ ThisBuild / githubWorkflowBuildPreamble :=
   List(
     WorkflowStep.Sbt(List("scalafmtSbtCheck", "scalafmtCheckAll")),
     WorkflowStep.Run(List("sbt 'scalafixAll --check'")),
+    WorkflowStep.Sbt(List("publishLocal")),
     WorkflowStep.Sbt(List("scripted")),
     WorkflowStep.Sbt(List("doc"))
   )

@@ -65,6 +65,9 @@ jobs:
         run: sbt 'scalafixAll --check'
 
       - shell: bash
+        run: sbt ++${{ matrix.scala }} publishLocal
+
+      - shell: bash
         run: sbt ++${{ matrix.scala }} scripted
 
       - shell: bash
