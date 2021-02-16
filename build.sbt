@@ -135,15 +135,18 @@ lazy val root: Project = (project in file("."))
 
 // Core //
 
-lazy val core: Project = project.settings(
-  name := s"${projectName}-core",
-  libraryDependencies ++= List(coursierG %% coursierVersionsA % coursierVersionsV) ++
-    List(scalametaG %% munitA % munitV).map(_ % Test)
-)
+lazy val core: Project = project
+  .settings(commonSettings, publishSettings)
+  .settings(
+    name := s"${projectName}-core",
+    libraryDependencies ++= List(coursierG %% coursierVersionsA % coursierVersionsV) ++
+      List(scalametaG %% munitA % munitV).map(_ % Test)
+  )
 
 // Plugin //
 
 lazy val plugin: Project = project
+  .settings(commonSettings, publishSettings)
   .settings(
     name := s"${projectName}-plugin",
     addSbtPlugin(typesafeG % sbtMimaPluginA % sbtMimaPluginV),
