@@ -1,6 +1,6 @@
 # SBT Version Scheme Enforcer #
 
-The SBT Version Scheme enforcer plugin is a plugin which automatically configures [Migration Manager (MiMa)][mima] to verify the binary compatibility constraints of your library.
+The SBT Version Scheme Enforcer plugin is a plugin which automatically configures [Migration Manager (MiMa)][mima] to verify the binary compatibility constraints of your library.
 
 # TL;DR How Do I Turn It On #
 
@@ -86,7 +86,7 @@ However, the primary reason that I decided to write this plugin is that both [sb
 
 ## Example ##
 
-For example, let's say that you have a library which depends on [Cats Effect][cats-effect] at version 2.x.x. Now you want to update your library to use the new upcoming [cats-effect][cats-effect] 3 release, but you still want to maintain an old version for your users who haven't yet updated for [Cats Effect][cats-effect] 3. In a [SemVer][semver] or [Early SemVer][early-semver] world you update your library from version `1.2.3` to `2.0.0`. At this point you can keep release `1.x.x` branches _as long as you never break binary compatibility_. If this fits your use case, then you are all set, however if you _do_ end up needing to make a binary incompatible release on the `1.x.x` branch (perhaps becomes some other library you depend on forced a binary incompatible update), then you are in an difficult situation. What version should your new `1.x.x` release have? It can't be `2.x.x` because that is already in use for your [Cats Effect 3][cats-effect] branch, and obviously `3.0.0` would be _valid_ but _extremely confusing_ for your users.
+For example, let's say that you have a library which depends on [Cats Effect][cats-effect] at version 2.x.x. Now you want to update your library to use the new upcoming [cats-effect][cats-effect] 3 release, but you still want to maintain an old version for your users who haven't yet updated for [Cats Effect 3][cats-effect]. In a [SemVer][semver] or [Early SemVer][early-semver] world you update your library from version `1.2.3` to `2.0.0`. At this point you can keep release `1.x.x` branches _as long as you never break binary compatibility_. If this fits your use case, then you are all set, however if you _do_ end up needing to make a binary incompatible release on the `1.x.x` branch (perhaps becomes some other library you depend on forced a binary incompatible update), then you are in an difficult situation. What version should your new `1.x.x` release have? By definition, it can't be a `1.x.x` release, nor can it be `2.x.x` because that is already in use for your [Cats Effect 3][cats-effect] branch, and obviously `3.0.0` would be _valid_ but _extremely confusing_ for your users.
 
 However, if you are using [pvp][pvp] then the situation is different. In [PVP][pvp] the first _two_ version numbers both describe a binary breaking change.
 
