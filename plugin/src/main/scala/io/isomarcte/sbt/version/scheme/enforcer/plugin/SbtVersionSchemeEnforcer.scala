@@ -71,13 +71,8 @@ private[plugin] object SbtVersionSchemeEnforcer {
     }
 
   def previousTagFromGit: Either[Throwable, Option[String]] =
-    Try(
-      sys
-        .process
-        .Process(gitCommandWithOutTags, None)
-        .lineStream
-        .headOption
-        .orElse(sys.process.Process(gitCommandWithTags, None).lineStream.headOption)
-        .map(normalizeVersion)
-    ).toEither
+    Try(sys.process.Process(gitCommandWithOutTags, None).lineStream.headOption)
+      .orElse(Try(sys.process.Process(gitCommandWithTags, None).lineStream.headOption))
+      .toEither
+      .map(_.map(normalizeVersion))
 }
