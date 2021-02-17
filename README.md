@@ -82,7 +82,7 @@ This means that you can still run `mimaReportBinaryIssues` and this plugin will 
 
 There are a couple other plugins out there which provide similar features compared to this plugin. In particular [SBT Version Policy][sbt-version-policy] and [SBT Mima Version Check][sbt-mima-version-check]. These plugins are both great. [sbt-version-policy][sbt-version-policy] also provides some additional features which this plugin does not, namely checking the versioning information of dependencies.
 
-However, the primary reason that I decided to write this plugin is that both [sbt-version-policy][sbt-version-policy] and [sbt-mima-version-check][sbt-mima-version-check] _only_ support configuring Mima for [Early SemVer][early-semver], and in the case of [sbt-version-policy][sbt-version-policy] they indicated they did not want to support any other versioning scheme ([pvp][pvp] or [semver][semver]). There are some use cases in versioning which [Early SemVer][early-semver] is fundamentally unable to express, namely supporting multiple long lived versions of the same project.
+However, the primary reason that I decided to write this plugin is that both [sbt-version-policy][sbt-version-policy] and [sbt-mima-version-check][sbt-mima-version-check] _only_ support configuring Mima for [Early SemVer][early-semver], and in the case of [sbt-version-policy][sbt-version-policy] they indicated they didn't intend to support any other versioning scheme ([pvp][pvp] or [semver][semver]). There are some use cases in versioning which [Early SemVer][early-semver] is fundamentally unable to express, namely supporting multiple long lived versions of the same project.
 
 ## Example ##
 
