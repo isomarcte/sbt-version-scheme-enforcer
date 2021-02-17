@@ -9,7 +9,7 @@ then
     # Publish locally first for the scripted tests.
     sbt '+publishLocal'
     sbt ';clean;scalafixAll --check;scalafmtSbtCheck;scalafmtCheckAll;test;scripted;doc;test:doc;'
-    read -r -p 'Continue with publish? Type (YES):' PUBLISH
+    read -r -p 'Continue with publish? Type (YES): ' PUBLISH
     if [ "${PUBLISH:?}" = 'YES' ]
     then
         sbt '+publishSigned'
