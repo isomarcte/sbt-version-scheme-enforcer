@@ -119,7 +119,8 @@ lazy val root: Project = (project in file("."))
     )
   )
   .settings(inThisBuild(commonSettings))
-  .aggregate(core, plugin).disablePlugins(SbtVersionSchemeEnforcerPlugin)
+  .aggregate(core, plugin)
+  .disablePlugins(SbtVersionSchemeEnforcerPlugin)
 
 // Core //
 
