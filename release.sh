@@ -12,7 +12,7 @@ then
     read -r -p 'Continue with publish? Type (YES):' PUBLISH
     if [ "${PUBLISH:?}" = 'YES' ]
     then
-        sbt '+publish'
+        sbt '+publishSigned'
     else
         echo "${PUBLISH} is not YES. Aborting." 1>&2
     fi
