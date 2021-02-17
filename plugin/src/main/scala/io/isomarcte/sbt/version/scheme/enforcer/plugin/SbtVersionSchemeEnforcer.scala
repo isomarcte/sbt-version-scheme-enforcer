@@ -51,7 +51,17 @@ private[plugin] object SbtVersionSchemeEnforcer {
       .fromCoursierVersion(Version(version))
       .fold(e => Left(new IllegalArgumentException(e)), value => Right(value))
 
-  private val command: Seq[String] = Seq("git", "--no-pager", "describe", "--abbrev=0", "@")
+  private val gitCommandWithTags: Seq[String] = Seq("git", "--no-pager", "describe", "--abbrev=0", "--tags", "@")
+
+  private val gitCommandWithOutTags: Seq[String] = Seq(
+    "git",
+    "--no-pager",
+    "describe",
+    "--abbrev=0",
+    "--tags",
+    """--exclude=*-[!0-9]*""",
+    "@"
+  )
 
   private def normalizeVersion(value: String): String =
     if (value.startsWith("v")) {
@@ -61,5 +71,13 @@ private[plugin] object SbtVersionSchemeEnforcer {
     }
 
   def previousTagFromGit: Either[Throwable, Option[String]] =
-    Try(sys.process.Process(command, None).lineStream.headOption.map(normalizeVersion)).toEither
+    Try(
+      sys
+        .process
+        .Process(gitCommandWithOutTags, None)
+        .lineStream
+        .headOption
+        .orElse(sys.process.Process(gitCommandWithTags, None).lineStream.headOption)
+        .map(normalizeVersion)
+    ).toEither
 }
