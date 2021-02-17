@@ -16,6 +16,8 @@ lazy val scalaVersions: Set[String] = Set(scala212)
 
 // General
 
+ThisBuild / scalacOptions ++= List("-target:jvm-1.8")
+
 ThisBuild / organization := isomarcteOrg
 ThisBuild / scalafixDependencies ++= List(organizeImportsG %% organizeImportsA % organizeImportsV)
 ThisBuild / scalafixScalaBinaryVersion := scalaBinaryVersion.value
