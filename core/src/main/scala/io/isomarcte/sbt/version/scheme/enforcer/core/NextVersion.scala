@@ -101,15 +101,11 @@ object NextVersion {
   /** Calculates the minimum next Early SemVer version given the [[VersionChangeType]]
     * and last released version.
     *
-    * @note AFAIK "Early SemVer" is not a formal versioning scheme and has no
-    *       formal documentation (if I'm wrong please open an issue or PR). It
-    *       is the same as SemVer with the exception that releases < 1.0.0
-    *       have specialized binary compatibility guarantees. Please see the
-    *       README for an overview.
-    *
     * This is equivalent to
     * `minimumNextNumericVersion(VersionCompatibility.EarlySemVer)(versionChangeType,
     * currentVersion)`.
+    *
+    * @see [[https://scala-lang.org/blog/2021/02/16/preventing-version-conflicts-with-versionscheme.html Early SemVer]]
     */
   def minimumNextEarlySemVer(
     versionChangeType: VersionChangeType,
