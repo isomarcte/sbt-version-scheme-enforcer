@@ -16,6 +16,8 @@ lazy val scalaVersions: Set[String] = Set(scala212)
 
 // General
 
+ThisBuild / versionScheme := Some("pvp")
+
 ThisBuild / scalacOptions ++= List("-target:jvm-1.8")
 
 ThisBuild / organization := isomarcteOrg
@@ -40,6 +42,7 @@ ThisBuild / githubWorkflowBuildPreamble :=
   List(
     WorkflowStep.Sbt(List("scalafmtSbtCheck", "scalafmtCheckAll")),
     WorkflowStep.Run(List("sbt 'scalafixAll --check'")),
+    WorkflowStep.Run(List("sbt versionSchemeCheck")),
     WorkflowStep.Sbt(List("publishLocal")),
     WorkflowStep.Sbt(List("scripted")),
     WorkflowStep.Sbt(List("doc"))
@@ -117,6 +120,7 @@ lazy val root: Project = (project in file("."))
   )
   .settings(inThisBuild(commonSettings))
   .aggregate(core, plugin)
+  .disablePlugins(SbtVersionSchemeEnforcerPlugin)
 
 // Core //
 
@@ -154,4 +158,5 @@ lazy val plugin: Project = project
     scriptedBufferLog := false
   )
   .enablePlugins(SbtPlugin)
+  .disablePlugins(SbtVersionSchemeEnforcerPlugin)
   .dependsOn(core)
