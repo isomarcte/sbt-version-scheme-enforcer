@@ -1,14 +1,14 @@
 import _root_.io.isomarcte.sbt.version.scheme.enforcer.core._
 
-ThisBuild / versionScheme := Some("semver-spec")
+ThisBuild / versionScheme := Some("pvp")
 
 lazy val root = (project in file(".")).settings(
-  version := "2.0.0-SNAPSHOT",
+  version := "0.1.0.0-SNAPSHOT",
   scalaVersion := "2.13.4",
-  versionSchemeEnforcerPreviousVersion := Some("1.0.0"),
+  versionSchemeEnforcerPreviousVersion := None,
   TaskKey[Unit]("check") := {
     val expected: Option[Either[Throwable, VersionChangeType]] =
-      Some(Right(VersionChangeType.Major))
+      None
     val actual: Option[Either[Throwable, VersionChangeType]] =
       versionSchemeEnforcerChangeType.value
     if (actual == expected) {

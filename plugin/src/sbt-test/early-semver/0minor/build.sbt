@@ -7,9 +7,9 @@ lazy val root = (project in file(".")).settings(
   scalaVersion := "2.13.4",
   versionSchemeEnforcerPreviousVersion := Some("0.1.0"),
   TaskKey[Unit]("check") := {
-    val expected: Either[Throwable, VersionChangeType] =
-      Right(VersionChangeType.Minor)
-    val actual: Either[Throwable, VersionChangeType] =
+    val expected: Option[Either[Throwable, VersionChangeType]] =
+      Some(Right(VersionChangeType.Minor))
+    val actual: Option[Either[Throwable, VersionChangeType]] =
       versionSchemeEnforcerChangeType.value
     if (actual == expected) {
       ()

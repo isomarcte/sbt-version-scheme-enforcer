@@ -35,62 +35,77 @@ object SbtVersionSchemeEnforcerPlugin extends AutoPlugin {
       versionSchemeCheck := {
         versionSchemeEnforcerChangeType
           .value
-          .fold(e => sys.error(e.getLocalizedMessage), Function.const(MimaKeys.mimaReportBinaryIssues.value))
+          .fold(
+            streams
+              .value
+              .log
+              .info(
+                "versionSchemeEnforcerChangeType is empty, versionSchemeCheck will not be run. This usually means you've explicitly set versionSchemeEnforcerPreviousVersion to None."
+              )
+          )(_.fold(e => sys.error(e.getLocalizedMessage), Function.const(MimaKeys.mimaReportBinaryIssues.value)))
       },
       MimaKeys.mimaReportSignatureProblems := {
         versionSchemeEnforcerChangeType
           .value
-          .fold(
-            Function.const(MimaKeys.mimaReportSignatureProblems.value),
-            {
-              case VersionChangeType.Major =>
-                false
-              case VersionChangeType.Minor =>
-                true
-              case VersionChangeType.Patch =>
-                true
-            }
+          .fold(MimaKeys.mimaReportSignatureProblems.value)(
+            _.fold(
+              Function.const(MimaKeys.mimaReportSignatureProblems.value),
+              {
+                case VersionChangeType.Major =>
+                  false
+                case VersionChangeType.Minor =>
+                  true
+                case VersionChangeType.Patch =>
+                  true
+              }
+            )
           )
       },
       MimaKeys.mimaCheckDirection := {
         versionSchemeEnforcerChangeType
           .value
-          .fold(
-            Function.const("backward"),
-            {
-              case VersionChangeType.Major =>
-                MimaKeys.mimaCheckDirection.value
-              case VersionChangeType.Minor =>
-                "backward"
-              case VersionChangeType.Patch =>
-                "both"
-            }
+          .fold(MimaKeys.mimaCheckDirection.value)(
+            _.fold(
+              Function.const(MimaKeys.mimaCheckDirection.value),
+              {
+                case VersionChangeType.Major =>
+                  MimaKeys.mimaCheckDirection.value
+                case VersionChangeType.Minor =>
+                  "backward"
+                case VersionChangeType.Patch =>
+                  "both"
+              }
+            )
           )
       },
       MimaKeys.mimaFailOnProblem := {
         versionSchemeEnforcerChangeType
           .value
-          .fold(
-            Function.const(MimaKeys.mimaFailOnProblem.value),
-            {
-              case VersionChangeType.Major =>
-                false
-              case _ =>
-                true
-            }
+          .fold(MimaKeys.mimaFailOnProblem.value)(
+            _.fold(
+              Function.const(MimaKeys.mimaFailOnProblem.value),
+              {
+                case VersionChangeType.Major =>
+                  false
+                case _ =>
+                  true
+              }
+            )
           )
       },
       MimaKeys.mimaFailOnNoPrevious := {
         versionSchemeEnforcerChangeType
           .value
-          .fold(
-            Function.const(MimaKeys.mimaFailOnNoPrevious.value),
-            {
-              case VersionChangeType.Major =>
-                false
-              case _ =>
-                true
-            }
+          .fold(MimaKeys.mimaFailOnNoPrevious.value)(
+            _.fold(
+              Function.const(MimaKeys.mimaFailOnNoPrevious.value),
+              {
+                case VersionChangeType.Major =>
+                  false
+                case _ =>
+                  true
+              }
+            )
           )
       },
       MimaKeys.mimaPreviousArtifacts := {
