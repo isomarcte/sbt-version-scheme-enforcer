@@ -7,7 +7,7 @@ The SBT Version Scheme Enforcer plugin is a plugin which automatically configure
 If you are using git, then all you need to do is add the plugin to your `project/plugins.sbt` file,
 
 ```scala
-addSbtPlugin("io.isomarcte" % "sbt-version-scheme-enforcer-plugin" % "0.0.0.1")
+addSbtPlugin("io.isomarcte" % "sbt-version-scheme-enforcer-plugin" % "0.1.0.0")
 ```
 
 And ensure you've set `versionScheme` in your `build.sbt`.
@@ -64,13 +64,13 @@ _Any_ setting can be manually set at the project level and it will be left alone
 Name | Type | Description
 ---- | ---- | -----------
 versionSchemeEnforcerPreviousVersion | `Option[String]` | Previous version to compare against the current version for calculating binary compatibility. If you are using `git` and you have a tag as an ancestor to the current commit, this will be automatically derived.
-versionSchemeEnforcerChangeType | `Either[Throwable, VersionChangeType]` | The type of binary change. It is used to configured MiMa settings. Normally this is derived from versionSchemeEnforcerPreviousVersion and should not normally be set directly. If it results in an error and versionSchemeCheck is run, that error is raised.
+versionSchemeEnforcerChangeType | `Option[Either[Throwable, VersionChangeType]]` | The type of binary change. It is used to configured MiMa settings. Normally this is derived from versionSchemeEnforcerPreviousVersion and should not normally be set directly. If it results in an error and versionSchemeCheck is run, that error is raised. If the previous version is empty then this will be empty too in which case mima settings will not be altered in any way.
 
 ## Tasks ##
 
 Name | Type | Description
 ---- | ---- | -----------
-versionSchemeCheck | `Unit` | Validates that the sbt-version-scheme-enforcer settings are valid and runs MiMa with the derived settings.
+versionSchemeCheck | `Unit` | Verifies that the sbt-version-scheme-enforcer settings are valid and runs MiMa with the derived settings. If versionSchemeEnforcerPreviousVersion is empty then this task will not run any binary checks or fail. Note, by default if using git versionSchemeEnforcerPreviousVersion is automatically derived, so if you want this behavior you need to explicitly set this. This can be particularly useful when adding new modules to multi-module builds.
 
 ### Differnces Between `versionSchemeCheck` And `mimaReportBinaryIssues` ###
 

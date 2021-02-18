@@ -9,15 +9,9 @@ private[plugin] object SbtVersionSchemeEnforcer {
     scheme: Option[String],
     previousVersion: Option[String],
     nextVersion: String
-  ): Either[Throwable, VersionChangeType] = {
+  ): Option[Either[Throwable, VersionChangeType]] = {
     type ETV = Either[Throwable, VersionChangeType]
-    previousVersion.fold(
-      Left(
-        new RuntimeException(
-          "versionSchemeEnforcerPreviousVersion is unset and/or could not be derived from VCS, e.g. git. In order to use sbt-version-scheme-enforcer-plugin this value must be set or derivable from VCS."
-        )
-      ): Either[Throwable, VersionChangeType]
-    )(previousVersion =>
+    previousVersion.map(previousVersion =>
       for {
         s <- schemeToVersionCompatibility(scheme)
         p <- versionToNumericVersion(previousVersion)
