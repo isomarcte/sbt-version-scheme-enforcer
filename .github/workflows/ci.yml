@@ -65,7 +65,7 @@ jobs:
         run: sbt 'scalafixAll --check'
 
       - shell: bash
-        run: sbt versionSchemeCheck
+        run: sbt versionSchemeEnforcerCheck
 
       - shell: bash
         run: sbt ++${{ matrix.scala }} publishLocal

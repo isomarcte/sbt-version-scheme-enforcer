@@ -4,5 +4,5 @@ addSbtPlugin("com.github.cb372"          % "sbt-explicit-dependencies"          
 addSbtPlugin("com.jsuereth"              % "sbt-pgp"                            % "2.1.1")
 addSbtPlugin("com.timushev.sbt"          % "sbt-updates"                        % "0.5.1")
 addSbtPlugin("io.github.davidgregory084" % "sbt-tpolecat"                       % "0.1.16")
-addSbtPlugin("io.isomarcte"              % "sbt-version-scheme-enforcer-plugin" % "0.1.0.0")
+addSbtPlugin("io.isomarcte"              % "sbt-version-scheme-enforcer-plugin" % "0.2.0.0")
 addSbtPlugin("org.scalameta"             % "sbt-scalafmt"                       % "2.4.2")

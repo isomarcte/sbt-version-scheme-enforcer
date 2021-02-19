@@ -7,7 +7,7 @@ The SBT Version Scheme Enforcer plugin is a plugin which automatically configure
 If you are using git, then all you need to do is add the plugin to your `project/plugins.sbt` file,
 
 ```scala
-addSbtPlugin("io.isomarcte" % "sbt-version-scheme-enforcer-plugin" % "0.1.0.0")
+addSbtPlugin("io.isomarcte" % "sbt-version-scheme-enforcer-plugin" % "0.2.0.0")
 ```
 
 And ensure you've set `versionScheme` in your `build.sbt`.
