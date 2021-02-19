@@ -2,6 +2,7 @@ package io.isomarcte.sbt.version.scheme.enforcer.plugin
 
 import com.typesafe.tools.mima.plugin._
 import io.isomarcte.sbt.version.scheme.enforcer.core._
+import io.isomarcte.sbt.version.scheme.enforcer.plugin.SbtVersionSchemeEnforcer._
 import sbt.Keys._
 import sbt._
 
@@ -12,12 +13,15 @@ object SbtVersionSchemeEnforcerPlugin extends AutoPlugin {
   object autoImport extends Keys
   import autoImport._
 
+  override def globalSettings: Seq[Def.Setting[_]] =
+    Seq(versionSchemeEnforcerIntialVersion := None, versionSchemeEnforcerPreviousVersion := None)
+
   override def buildSettings: Seq[Def.Setting[_]] =
     Seq(
       versionSchemeEnforcerPreviousVersion := {
         val currentValue: Option[String] = versionSchemeEnforcerPreviousVersion.?.value.flatten
         if (currentValue.isEmpty) {
-          SbtVersionSchemeEnforcer.previousTagFromGit.toOption.flatten
+          previousTagFromGit.toOption.flatten
         } else {
           currentValue
         }
@@ -27,77 +31,71 @@ object SbtVersionSchemeEnforcerPlugin extends AutoPlugin {
   override def projectSettings: Seq[Def.Setting[_]] =
     Seq(
       versionSchemeEnforcerChangeType := {
-        val previousVersion: Option[String] = versionSchemeEnforcerPreviousVersion.value
+        val previousVersion: Option[String] = versionSchemeEnforcerPreviousVersion.?.value.flatten
         val currentVersion: String          = version.value
         val scheme: Option[String]          = versionScheme.?.value.flatten
-        SbtVersionSchemeEnforcer.versionChangeTypeFromSchemeAndPreviousVersion(scheme, previousVersion, currentVersion)
+        versionChangeTypeFromSchemeAndPreviousVersion(scheme, previousVersion, currentVersion)
       },
-      versionSchemeCheck := {
+      MimaKeys.mimaReportBinaryIssues := {
+        if (shouldRunMima(versionSchemeEnforcerIntialVersion.value, version.value, versionScheme.?.value.flatten)) {
+          MimaKeys.mimaReportBinaryIssues.value
+        } else {
+          ()
+        }
+      },
+      versionSchemeEnforcerCheck := {
         versionSchemeEnforcerChangeType
           .value
-          .fold(
-            streams
-              .value
-              .log
-              .info(
-                "versionSchemeEnforcerChangeType is empty, versionSchemeCheck will not be run. This usually means you've explicitly set versionSchemeEnforcerPreviousVersion to None."
-              )
-          )(_.fold(e => sys.error(e.getLocalizedMessage), Function.const(MimaKeys.mimaReportBinaryIssues.value)))
+          .fold(e => sys.error(e.getLocalizedMessage), Function.const(MimaKeys.mimaReportBinaryIssues.value))
       },
       MimaKeys.mimaReportSignatureProblems := {
         versionSchemeEnforcerChangeType
           .value
-          .fold(MimaKeys.mimaReportSignatureProblems.value)(
-            _.fold(
-              Function.const(MimaKeys.mimaReportSignatureProblems.value),
-              {
-                case VersionChangeType.Major =>
-                  false
-                case VersionChangeType.Minor =>
-                  true
-                case VersionChangeType.Patch =>
-                  true
-              }
-            )
+          .fold(
+            Function.const(MimaKeys.mimaReportSignatureProblems.value),
+            {
+              case VersionChangeType.Major =>
+                false
+              case VersionChangeType.Minor =>
+                true
+              case VersionChangeType.Patch =>
+                true
+            }
           )
       },
       MimaKeys.mimaCheckDirection := {
         versionSchemeEnforcerChangeType
           .value
-          .fold(MimaKeys.mimaCheckDirection.value)(
-            _.fold(
-              Function.const(MimaKeys.mimaCheckDirection.value),
-              {
-                case VersionChangeType.Major =>
-                  MimaKeys.mimaCheckDirection.value
-                case VersionChangeType.Minor =>
-                  "backward"
-                case VersionChangeType.Patch =>
-                  "both"
-              }
-            )
+          .fold(
+            Function.const(MimaKeys.mimaCheckDirection.value),
+            {
+              case VersionChangeType.Major =>
+                MimaKeys.mimaCheckDirection.value
+              case VersionChangeType.Minor =>
+                "backward"
+              case VersionChangeType.Patch =>
+                "both"
+            }
           )
       },
       MimaKeys.mimaFailOnProblem := {
         versionSchemeEnforcerChangeType
           .value
-          .fold(MimaKeys.mimaFailOnProblem.value)(
-            _.fold(
-              Function.const(MimaKeys.mimaFailOnProblem.value),
-              {
-                case VersionChangeType.Major =>
-                  false
-                case _ =>
-                  true
-              }
-            )
+          .fold(
+            Function.const(MimaKeys.mimaFailOnProblem.value),
+            {
+              case VersionChangeType.Major =>
+                false
+              case _ =>
+                true
+            }
           )
       },
       MimaKeys.mimaFailOnNoPrevious := {
-        versionSchemeEnforcerChangeType
-          .value
-          .fold(MimaKeys.mimaFailOnNoPrevious.value)(
-            _.fold(
+        if (shouldRunMima(versionSchemeEnforcerIntialVersion.value, version.value, versionScheme.?.value.flatten)) {
+          versionSchemeEnforcerChangeType
+            .value
+            .fold(
               Function.const(MimaKeys.mimaFailOnNoPrevious.value),
               {
                 case VersionChangeType.Major =>
@@ -106,11 +104,18 @@ object SbtVersionSchemeEnforcerPlugin extends AutoPlugin {
                   true
               }
             )
-          )
+        } else {
+          false
+        }
       },
       MimaKeys.mimaPreviousArtifacts := {
+        val shouldRun: Boolean = shouldRunMima(
+          versionSchemeEnforcerIntialVersion.value,
+          version.value,
+          versionScheme.?.value.flatten
+        )
         val currentValue: Set[ModuleID] = MimaKeys.mimaPreviousArtifacts.value
-        if (currentValue.isEmpty && publishArtifact.in(Compile).value) {
+        if (shouldRun && currentValue.isEmpty && publishArtifact.in(Compile).value) {
           versionSchemeEnforcerPreviousVersion
             .value
             .fold(currentValue)(previousVersion => Set(organization.value %% name.value % previousVersion))

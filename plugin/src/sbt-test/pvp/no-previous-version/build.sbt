@@ -5,12 +5,12 @@ ThisBuild / versionScheme := Some("pvp")
 lazy val root = (project in file(".")).settings(
   version := "0.1.0.0-SNAPSHOT",
   scalaVersion := "2.13.4",
-  versionSchemeEnforcerPreviousVersion := None,
+  versionSchemeEnforcerIntialVersion := Some("0.1.0.0"),
   TaskKey[Unit]("check") := {
-    val expected: Option[Either[Throwable, VersionChangeType]] =
-      None
-    val actual: Option[Either[Throwable, VersionChangeType]] =
-      versionSchemeEnforcerChangeType.value
+    val expected: Set[ModuleID] =
+      Set.empty
+    val actual: Set[ModuleID] =
+      mimaPreviousArtifacts.value
     if (actual == expected) {
       ()
     } else {
