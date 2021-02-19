@@ -1,5 +1,6 @@
 package io.isomarcte.sbt.version.scheme.enforcer.plugin
 
+import _root_.io.isomarcte.sbt.version.scheme.enforcer.core.SafeEquals._
 import _root_.io.isomarcte.sbt.version.scheme.enforcer.core._
 import coursier.version._
 import scala.util.Try
@@ -9,18 +10,19 @@ private[plugin] object SbtVersionSchemeEnforcer {
     scheme: Option[String],
     previousVersion: Option[String],
     nextVersion: String
-  ): Option[Either[Throwable, VersionChangeType]] = {
+  ): Either[Throwable, VersionChangeType] = {
     type ETV = Either[Throwable, VersionChangeType]
-    previousVersion.map(previousVersion =>
-      for {
-        s <- schemeToVersionCompatibility(scheme)
-        p <- versionToNumericVersion(previousVersion)
-        n <- versionToNumericVersion(nextVersion)
-        result <- VersionChangeType
-          .fromPreviousAndNextNumericVersion(s)(p, n)
-          .fold(e => Left(new RuntimeException(e)): ETV, value => Right(value): ETV)
-      } yield result
-    )
+    previousVersion
+      .fold(Left(new RuntimeException("versionSchemeEnforcerPreviousVersion is unset")): ETV)(previousVersion =>
+        for {
+          s <- schemeToVersionCompatibility(scheme)
+          p <- versionToNumericVersion(previousVersion)
+          n <- versionToNumericVersion(nextVersion)
+          result <- VersionChangeType
+            .fromPreviousAndNextNumericVersion(s)(p, n)
+            .fold(e => Left(new RuntimeException(e)): ETV, value => Right(value): ETV)
+        } yield result
+      )
   }
 
   def schemeToVersionCompatibility(scheme: Option[String]): Either[Throwable, VersionCompatibility] =
@@ -69,4 +71,22 @@ private[plugin] object SbtVersionSchemeEnforcer {
       .orElse(Try(sys.process.Process(gitCommandWithTags, None).lineStream.headOption))
       .toEither
       .map(_.map(normalizeVersion))
+
+  /** Checks if we should run mima by inspecting the initial version value on
+    * which to enforce the given `versionScheme` and the current version.
+    *
+    * Tags, e.g. `-SNAPSHOT`, are removed from the current version. If they
+    * weren't then the calculation would be wrong in certain circumstances.
+    */
+  def shouldRunMima(initialVersion: Option[String], currentVersion: String, scheme: Option[String]): Boolean =
+    scheme
+      .flatMap(VersionCompatibility.apply _)
+      .fold(false)(scheme =>
+        initialVersion.fold(true)(initialVersion =>
+          SchemedVersion
+            .fromVersionStringAndScheme(initialVersion, scheme)
+            // Need to remove any tag, e.g. -SNAPSHOT or the comparison will be wonky.
+            .compareTo(SchemedVersion.fromVersionStringAndScheme(currentVersion.takeWhile(_ =!= '-'), scheme)) < 0
+        )
+      )
 }

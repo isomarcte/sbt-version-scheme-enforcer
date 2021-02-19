@@ -23,7 +23,7 @@ version, everything else can be derived.
 
 The previous version of your project will be detected from the current commits most recent git tag.
 
-You can then run either `mimaReportBinaryIssues` as normal or `versionSchemeCheck` (differences explained below).
+You can then run either `mimaReportBinaryIssues` as normal or `versionSchemeEnforcerCheck` (differences explained below).
 
 If you are using a multi-module build and you don't want to run this on your the root project, then add this to your root project only.
 
@@ -64,17 +64,18 @@ _Any_ setting can be manually set at the project level and it will be left alone
 Name | Type | Description
 ---- | ---- | -----------
 versionSchemeEnforcerPreviousVersion | `Option[String]` | Previous version to compare against the current version for calculating binary compatibility. If you are using `git` and you have a tag as an ancestor to the current commit, this will be automatically derived.
-versionSchemeEnforcerChangeType | `Option[Either[Throwable, VersionChangeType]]` | The type of binary change. It is used to configured MiMa settings. Normally this is derived from versionSchemeEnforcerPreviousVersion and should not normally be set directly. If it results in an error and versionSchemeCheck is run, that error is raised. If the previous version is empty then this will be empty too in which case mima settings will not be altered in any way.
+versionSchemeEnforcerChangeType | `Either[Throwable, VersionChangeType]` | The type of binary change. It is used to configured MiMa settings. Normally this is derived from versionSchemeEnforcerPreviousVersion and should not normally be set directly. If it results in an error and versionSchemeEnforcerCheck is run, that error is raised.
+versionSchemeEnforcerIntialVersion | `Option[String]` | The initial version which should have the versionScheme enforced. If this is set then verions <= to this version will have Mima configured to not validate any binary compatibility constraints. This is particularly useful when you are adding a new module to an exsiting project.
 
 ## Tasks ##
 
 Name | Type | Description
 ---- | ---- | -----------
-versionSchemeCheck | `Unit` | Verifies that the sbt-version-scheme-enforcer settings are valid and runs MiMa with the derived settings. If versionSchemeEnforcerPreviousVersion is empty then this task will not run any binary checks or fail. Note, by default if using git versionSchemeEnforcerPreviousVersion is automatically derived, so if you want this behavior you need to explicitly set this. This can be particularly useful when adding new modules to multi-module builds.
+versionSchemeEnforcerCheck | `Unit` | Verifies that the sbt-version-scheme-enforcer settings are valid and runs MiMa with the derived settings.
 
-### Differnces Between `versionSchemeCheck` And `mimaReportBinaryIssues` ###
+### Differnces Between `versionSchemeEnforcerCheck` And `mimaReportBinaryIssues` ###
 
-`versionSchemeCheck` and `mimaReportBinaryIssues` are very similar, and in fact _most_ of what `versionSchemeCheck` does is just run `mimaReportBinaryIssues`. The only significant difference is that `versionSchemeCheck` will raise an error if any of the settings required from validating the version scheme are missing or invalid. For example, if you don't set `versionScheme` or set it to an invalid value `versionSchemeCheck` will fail. On the other hand, **if any of the settings required for verifying the version scheme are invalid/missing _none_ of the mima settings are modified by this plugin.**
+`versionSchemeEnforcerCheck` and `mimaReportBinaryIssues` are very similar, and in fact _most_ of what `versionSchemeEnforcerCheck` does is just run `mimaReportBinaryIssues`. The only significant difference is that `versionSchemeEnforcerCheck` will raise an error if any of the settings required from validating the version scheme are missing or invalid. For example, if you don't set `versionScheme` or set it to an invalid value `versionSchemeEnforcerCheck` will fail. On the other hand, **if any of the settings required for verifying the version scheme are invalid/missing _none_ of the mima settings are modified by this plugin.**
 
 This means that you can still run `mimaReportBinaryIssues` and this plugin will stay out of your way.
 
