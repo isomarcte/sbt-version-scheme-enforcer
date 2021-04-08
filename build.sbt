@@ -9,7 +9,7 @@ lazy val isomarcteOrg: String       = "io.isomarcte"
 lazy val jreVersionForDocs: String  = JREMajorVersion.majorVersion
 lazy val projectName: String        = "sbt-version-scheme-enforcer"
 lazy val projectUrl: URL            = url("https://github.com/isomarcte/sbt-version-scheme-enforcer")
-lazy val scala212: String           = "2.12.12"
+lazy val scala212: String           = "2.12.13"
 lazy val scalaVersions: Set[String] = Set(scala212)
 
 // ThisBuild //
@@ -146,7 +146,7 @@ lazy val plugin: Project = project
         scalaSbtG  % sbtA                      % sbtVersion.value,
         scalaSbtG %% sbtCollectionsA           % sbtVersion.value,
         scalaSbtG %% sbtCoreMacrosA            % sbtVersion.value,
-        scalaSbtG %% sbtLibraryManagementCoreA % sbtLibraryManagementCoreV,
+        scalaSbtG %% sbtLibraryManagementCoreA % sbtVersion.value,
         scalaSbtG %% sbtMainA                  % sbtVersion.value,
         scalaSbtG %% sbtMainSettingsA          % sbtVersion.value,
         scalaSbtG %% sbtTaskSystemA            % sbtVersion.value,

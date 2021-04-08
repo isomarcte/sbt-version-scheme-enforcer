@@ -115,7 +115,7 @@ object SbtVersionSchemeEnforcerPlugin extends AutoPlugin {
           versionScheme.?.value.flatten
         )
         val currentValue: Set[ModuleID] = MimaKeys.mimaPreviousArtifacts.value
-        if (shouldRun && currentValue.isEmpty && publishArtifact.in(Compile).value) {
+        if (shouldRun && currentValue.isEmpty && (Compile / publishArtifact).value) {
           versionSchemeEnforcerPreviousVersion
             .value
             .fold(currentValue)(previousVersion => Set(organization.value %% name.value % previousVersion))
