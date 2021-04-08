@@ -3,6 +3,8 @@ package io.isomarcte.sbt.version.scheme.enforcer.plugin
 import _root_.io.isomarcte.sbt.version.scheme.enforcer.core.SafeEquals._
 import _root_.io.isomarcte.sbt.version.scheme.enforcer.core._
 import coursier.version._
+import scala.sys.process.ProcessLogger
+import scala.util.Success
 import scala.util.Try
 
 private[plugin] object SbtVersionSchemeEnforcer {
@@ -66,11 +68,40 @@ private[plugin] object SbtVersionSchemeEnforcer {
       value
     }
 
+  /** Doesn't log any output.
+    *
+    * This is used when checking if the project is a VCS system we understand.
+    */
+  private val silentProcessLogger: ProcessLogger = ProcessLogger(_ => ())
+
+  /** Check if the project is using git for VCS. */
+  private def isGitProject: Boolean =
+    Try(
+      sys
+        .process
+        .Process(Seq("git", "rev-parse", "--is-inside-work-tree"))
+        .lineStream(silentProcessLogger)
+        .headOption
+        .map(_.trim.toLowerCase)
+    ) match {
+      case Success(Some(value)) if value === "true" =>
+        true
+      case _ =>
+        false
+    }
+
+  /** Attempt to get the previous tag from git, if this project is managed under
+    * git.
+    */
   def previousTagFromGit: Either[Throwable, Option[String]] =
-    Try(sys.process.Process(gitCommandWithOutTags, None).lineStream.headOption)
-      .orElse(Try(sys.process.Process(gitCommandWithTags, None).lineStream.headOption))
-      .toEither
-      .map(_.map(normalizeVersion))
+    if (isGitProject) {
+      Try(sys.process.Process(gitCommandWithOutTags).lineStream.headOption)
+        .orElse(Try(sys.process.Process(gitCommandWithTags).lineStream.headOption))
+        .toEither
+        .map(_.map(normalizeVersion))
+    } else {
+      Left(new RuntimeException("The current project does not appear to be a git project."))
+    }
 
   /** Checks if we should run mima by inspecting the initial version value on
     * which to enforce the given `versionScheme` and the current version.
