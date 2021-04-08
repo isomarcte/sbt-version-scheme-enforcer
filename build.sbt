@@ -90,7 +90,7 @@ lazy val publishSettings = List(
   homepage := Some(projectUrl),
   licenses := Seq("BSD3" -> url("https://opensource.org/licenses/BSD-3-Clause")),
   publishMavenStyle := true,
-  publishArtifact in Test := false,
+  Test / publishArtifact := false,
   pomIncludeRepository := { _ =>
     false
   },
