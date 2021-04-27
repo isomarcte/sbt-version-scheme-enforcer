@@ -7,7 +7,7 @@ The SBT Version Scheme Enforcer plugin is a plugin which automatically configure
 If you are using git, then all you need to do is add the plugin to your `project/plugins.sbt` file,
 
 ```scala
-addSbtPlugin("io.isomarcte" % "sbt-version-scheme-enforcer-plugin" % "1.0.0.0")
+addSbtPlugin("io.isomarcte" % "sbt-version-scheme-enforcer-plugin" % "1.0.0.1")
 ```
 
 And ensure you've set `versionScheme` in your `build.sbt`.
@@ -83,7 +83,7 @@ This means that you can still run `mimaReportBinaryIssues` and this plugin will 
 
 There are a couple other plugins out there which provide similar features compared to this plugin. In particular [SBT Version Policy][sbt-version-policy] and [SBT Mima Version Check][sbt-mima-version-check]. These plugins are both great. [sbt-version-policy][sbt-version-policy] also provides some additional features which this plugin does not, namely checking the versioning information of dependencies.
 
-However, the primary reason that I decided to write this plugin is that both [sbt-version-policy][sbt-version-policy] and [sbt-mima-version-check][sbt-mima-version-check] _only_ support configuring Mima for [Early SemVer][early-semver], and in the case of [sbt-version-policy][sbt-version-policy] they indicated they didn't intend to support any other versioning scheme ([pvp][pvp] or [semver][semver]). There are some use cases in versioning which [Early SemVer][early-semver] is fundamentally unable to express, namely supporting multiple long lived versions of the same project.
+However, the primary reason that I decided to write this plugin is that both [sbt-version-policy][sbt-version-policy] and [sbt-mima-version-check][sbt-mima-version-check] _only_ support configuring Mima for [Early SemVer][early-semver], and in the case of [sbt-version-policy][sbt-version-policy] they indicated that at this time they didn't intend to support any other versioning scheme ([pvp][pvp] or [semver][semver]). There are some use cases in versioning which [Early SemVer][early-semver] is fundamentally unable to express, namely supporting multiple long lived versions of the same project.
 
 ## Example ##
 
