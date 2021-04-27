@@ -143,14 +143,14 @@ lazy val plugin: Project = project
     libraryDependencies ++=
       List(
         coursierG %% coursierVersionsA         % coursierVersionsV,
-        scalaSbtG  % sbtA                      % sbtVersion.value % Provided,
-        scalaSbtG %% sbtCollectionsA           % sbtVersion.value % Provided,
-        scalaSbtG %% sbtCoreMacrosA            % sbtVersion.value % Provided,
-        scalaSbtG %% sbtLibraryManagementCoreA % sbtVersion.value % Provided,
-        scalaSbtG %% sbtMainA                  % sbtVersion.value % Provided,
-        scalaSbtG %% sbtMainSettingsA          % sbtVersion.value % Provided,
-        scalaSbtG %% sbtTaskSystemA            % sbtVersion.value % Provided,
-        scalaSbtG %% sbtUtilPositionA          % sbtVersion.value % Provided
+        scalaSbtG  % sbtA                      % sbtVersion.value          % Provided,
+        scalaSbtG %% sbtCollectionsA           % sbtVersion.value          % Provided,
+        scalaSbtG %% sbtCoreMacrosA            % sbtVersion.value          % Provided,
+        scalaSbtG %% sbtLibraryManagementCoreA % sbtLibraryManagementCoreV % Provided,
+        scalaSbtG %% sbtMainA                  % sbtVersion.value          % Provided,
+        scalaSbtG %% sbtMainSettingsA          % sbtVersion.value          % Provided,
+        scalaSbtG %% sbtTaskSystemA            % sbtVersion.value          % Provided,
+        scalaSbtG %% sbtUtilPositionA          % sbtVersion.value          % Provided
       ),
     scriptedLaunchOpts := {
       scriptedLaunchOpts.value ++ Seq("-Dplugin.version=" + version.value)
