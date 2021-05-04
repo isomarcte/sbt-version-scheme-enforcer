@@ -4,7 +4,8 @@ The SBT Version Scheme Enforcer plugin is a plugin which automatically configure
 
 # TL;DR How Do I Turn It On #
 
-If you are using git, then all you need to do is add the plugin to your `project/plugins.sbt` file,
+
+If you are using git, then all you need to do is add the plugin to your `project/plugins.sbt` file. If you are _not_ using git, then you will additionally have to set `versionSchemeEnforcerPreviousVersion` with your previous version.
 
 ```scala
 addSbtPlugin("io.isomarcte" % "sbt-version-scheme-enforcer-plugin" % "1.0.0.1")
@@ -30,6 +31,7 @@ If you are using a multi-module build and you don't want to run this on your the
 ```scala
 lazy val root = (project in file(".")).settings(/* settings */).disablePlugins(SbtVersionSchemeEnforcerPlugin)
 ```
+
 
 # Overview #
 
