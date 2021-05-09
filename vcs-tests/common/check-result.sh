@@ -5,7 +5,7 @@
 # result. We do this operation for all VCS types in multiple test
 # types.
 
-set -e
+set -ex
 
 EXPECTED="${1:?}"
 RESULT=''

@@ -2,7 +2,7 @@
 #
 # Tests for git VCS system.
 
-set -e
+set -ex
 
 # Variables #
 

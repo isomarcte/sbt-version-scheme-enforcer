@@ -6,7 +6,7 @@
 # creating a clean git project when we are already inside a git
 # project.
 
-set -e
+set -ex
 
 sbt +publishLocal
 
