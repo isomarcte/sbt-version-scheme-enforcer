@@ -65,7 +65,11 @@ cd "$TEST_PROJECT"
 
 # No tags yet
 
-git init
+git init -b main
+
+# Github Actions CI test fails if these are not set.
+git config user.email 'ci-test@loopback'
+git config user.name 'ci-test'
 
 add_commit
 
