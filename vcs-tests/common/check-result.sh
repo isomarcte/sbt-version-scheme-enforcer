@@ -17,7 +17,7 @@ RESULT="$(cat "${VERSION_SCHEME_OUT_FILE:?}")"
 if [ "${RESULT:?}" != "${EXPECTED:?}" ]
 then
     echo "Expected ${EXPECTED:?}, Got ${RESULT:?}" 1>&2
-    return 1
+    exit 1
 else
-    return 0
+    exit 0
 fi
