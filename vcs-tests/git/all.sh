@@ -44,6 +44,8 @@ export VERSION_SCHEME_OUT_FILE="${TEMP_DIR}/out"
 check_result() {
     if check-result.sh "${1:?}"
     then
+        return 0
+    else
         FAILED=1
     fi
 }
