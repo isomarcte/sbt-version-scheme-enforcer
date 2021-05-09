@@ -79,7 +79,7 @@ check_result 'None'
 
 git tag '0.0.0.1' @
 
-check_result 'Some("0.0.0.1")'
+check_result 'Some(0.0.0.1)'
 
 # Two tags, should only find the most recent one
 
@@ -87,7 +87,7 @@ add_commit
 
 git tag '0.0.0.2' @
 
-check_result 'Some("0.0.0.2")'
+check_result 'Some(0.0.0.2)'
 
 cd "$ORIGINAL_WD"
 
