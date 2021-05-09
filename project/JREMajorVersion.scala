@@ -17,6 +17,7 @@ object JREMajorVersion {
     sys
       .props
       .get("java.version")
+      .map(_.takeWhile(_ != '-')) // handles things like '17-ea'
       .fold(
         throw new RuntimeException(
           "Unable to determine JRE major version since java.version is unset, which should not be possible for standard JVMs."
