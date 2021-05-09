@@ -41,6 +41,30 @@ object NumericVersion {
     override val hasTag: Boolean
   ) extends NumericVersion
 
+  /** Normalize a version [[java.lang.String]] value.
+    *
+    * Often version strings have a format which is intended for humans making
+    * them differ from a strict numeric version string, but they will still
+    * represent an unambiguous numeric version. The most common example of
+    * this is when a version string is prefixed with a 'v' character,
+    * e.g. `v1.0.0`. This function attempts to transform the given version
+    * [[java.lang.String]] to a format that can be parsed as a
+    * [[NumericVersion]].
+    *
+    * This function is very simple, so parsing may still fail. For example, if
+    * the input was "vvvv", this function would transform it to "vvv", which
+    * is still not a valid [[NumericVersion]].
+    *
+    * This function is always invoked when creating a [[NumericVersion]] from
+    * any of the [[java.lang.String]] based functions.
+    */
+  def normalizeVersionString(value: String): String =
+    if (value.startsWith("v")) {
+      value.drop(1)
+    } else {
+      value
+    }
+
   /** Create a [[NumericVersion]] from a [[scala.collections.Vector]] of [[scala.math.BigInt]] value.
     *
     * @note This will yield a `Left` value if any of the members are < 0 or if
@@ -70,8 +94,18 @@ object NumericVersion {
   def unsafeFromVectorIsTag(value: Vector[BigInt], isTag: Boolean): NumericVersion =
     fromVectorIsTag(value, isTag).fold(e => throw new IllegalArgumentException(e), identity)
 
-  /** Create a [[NumericVersion]] from a [[java.lang.String]]. */
-  def fromString(value: String): Either[String, NumericVersion] = fromCoursierVersion(Version(value))
+  /** Create a [[NumericVersion]] from a [[java.lang.String]].
+    *
+    * If the given [[java.lang.String]] begins with a "v", it will be dropped.
+    */
+  def fromString(value: String): Either[String, NumericVersion] =
+    fromCoursierVersion(Version(normalizeVersionString(value)))
+
+  /** As [[#fromString]], but the left projection is a [[java.lang.Throwable]],
+    * rather than an error [[java.lang.String]].
+    */
+  def fromStringT(value: String): Either[Throwable, NumericVersion] =
+    fromString(value).fold(errorString => Left(new IllegalArgumentException(errorString)), value => Right(value))
 
   /** As [[#fromString]], but throws on invalid input. Should not be used
     * outside toy code and the REPL.
