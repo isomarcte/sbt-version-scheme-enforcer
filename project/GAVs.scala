@@ -37,5 +37,5 @@ object GAVs {
   lazy val munitV: String            = "0.7.25"
   lazy val organizeImportsV          = "0.4.4"
   lazy val sbtLibraryManagementCoreV = "1.5.0"
-  lazy val sbtMimaPluginV: String    = "0.8.1"
+  lazy val sbtMimaPluginV: String    = "0.9.0"
 }
