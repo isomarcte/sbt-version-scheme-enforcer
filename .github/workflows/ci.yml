@@ -59,19 +59,18 @@ jobs:
           key: ${{ runner.os }}-sbt-cache-v2-${{ hashFiles('**/*.sbt') }}-${{ hashFiles('project/build.properties') }}
 
       - shell: bash
-        run: sbt ++${{ matrix.scala }} scalafmtSbtCheck scalafmtCheckAll
+        run: sbt ++${{ matrix.scala }} scalafmtSbtCheck scalafmtCheckAll versionSchemeEnforcerCheck
 
       - shell: bash
         run: sbt 'scalafixAll --check'
 
       - shell: bash
-        run: sbt versionSchemeEnforcerCheck
-
-      - shell: bash
         run: sbt ++${{ matrix.scala }} publishLocal
 
       - shell: bash
-        run: sbt ++${{ matrix.scala }} scripted
+        run: |
+          sbt scripted
+          ./run-vcs-tests.sh
 
       - shell: bash
         run: sbt ++${{ matrix.scala }} doc
