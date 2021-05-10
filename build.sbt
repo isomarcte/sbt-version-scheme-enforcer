@@ -40,11 +40,10 @@ ThisBuild / githubWorkflowOSes := Set("macos-latest", "windows-latest", "ubuntu-
 ThisBuild / githubWorkflowJavaVersions := Set("adopt@1.11", "adopt@1.15", "adopt@1.8").toList
 ThisBuild / githubWorkflowBuildPreamble :=
   List(
-    WorkflowStep.Sbt(List("scalafmtSbtCheck", "scalafmtCheckAll")),
+    WorkflowStep.Sbt(List("scalafmtSbtCheck", "scalafmtCheckAll", "versionSchemeEnforcerCheck")),
     WorkflowStep.Run(List("sbt 'scalafixAll --check'")),
-    WorkflowStep.Run(List("sbt versionSchemeEnforcerCheck")),
     WorkflowStep.Sbt(List("publishLocal")),
-    WorkflowStep.Sbt(List("scripted")),
+    WorkflowStep.Run(List("sbt scripted", "./run-vcs-tests.sh")),
     WorkflowStep.Sbt(List("doc"))
   )
 ThisBuild / githubWorkflowBuildPostamble := List(WorkflowStep.Sbt(List("test:doc")))

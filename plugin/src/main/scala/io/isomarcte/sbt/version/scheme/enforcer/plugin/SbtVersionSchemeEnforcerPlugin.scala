@@ -3,6 +3,7 @@ package io.isomarcte.sbt.version.scheme.enforcer.plugin
 import com.typesafe.tools.mima.plugin._
 import io.isomarcte.sbt.version.scheme.enforcer.core._
 import io.isomarcte.sbt.version.scheme.enforcer.plugin.SbtVersionSchemeEnforcer._
+import io.isomarcte.sbt.version.scheme.enforcer.plugin.vcs._
 import sbt.Keys._
 import sbt._
 
@@ -20,10 +21,16 @@ object SbtVersionSchemeEnforcerPlugin extends AutoPlugin {
     Seq(
       versionSchemeEnforcerPreviousVersion := {
         val currentValue: Option[String] = versionSchemeEnforcerPreviousVersion.?.value.flatten
-        if (currentValue.isEmpty) {
-          previousTagFromGit.toOption.flatten
-        } else {
+        if (currentValue.isDefined) {
           currentValue
+        } else {
+          VCS
+            .determineVCSE
+            .fold(
+              Function.const(currentValue),
+              vcs =>
+                vcs.previousTagVersions.headOption.fold(currentValue)(previousTag => Some(previousTag.versionString))
+            )
         }
       }
     )
