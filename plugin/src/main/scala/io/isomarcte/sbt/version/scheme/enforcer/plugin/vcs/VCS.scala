@@ -22,10 +22,36 @@ sealed private[plugin] trait VCS extends Product with Serializable {
   /** As [[#previousTagStrings]], but the tags are parsed into
     * [[NumericVersion]] values. Non numeric versions are filtered from the
     * `Stream`.
+    *
+    * @param transform A transformation function applied to the
+    *        [[java.lang.String]] representation of a tag. Returning `None`
+    *        will cause the tag to be discarded, returning `Some(value)` will
+    *        cause it to be transformed/replaced. This is a generic type of
+    *        transform which can be used for filtering and transformation.
     */
-  final def previousTagVersions: Stream[NumericVersion] =
-    previousTagStrings.flatMap(value =>
-      NumericVersion.fromString(value).fold(Function.const(Stream.empty[NumericVersion]), value => Stream(value))
+  final def previousTagVersionsTransform(transform: String => Option[String]): Stream[NumericVersion] =
+    previousTagStrings
+      .flatMap { value =>
+        println(s"Current value: $value")
+        val result = transform(value).fold(Stream.empty[String])(value => Stream(value))
+        println(s"Result: $result")
+        result
+      }
+      .flatMap(value =>
+        NumericVersion.fromString(value).fold(Function.const(Stream.empty[NumericVersion]), value => Stream(value))
+      )
+
+  /** As [[#previousTagVersionsTransform]], but specialized to the common use
+    * case of merely filtering out some tags. No transformation is done in on
+    * the tag value itself other than converting it to a [[NumericVersion]].
+    */
+  final def previousTagVersionsFiltered(tagFilter: String => Boolean): Stream[NumericVersion] =
+    previousTagVersionsTransform(value =>
+      if (tagFilter(value)) {
+        Some(value)
+      } else {
+        None
+      }
     )
 }
 

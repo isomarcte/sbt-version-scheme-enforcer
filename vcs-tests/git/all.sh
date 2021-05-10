@@ -72,6 +72,7 @@ git init -b main
 # Github Actions CI test fails if these are not set.
 git config user.email 'ci-test@loopback'
 git config user.name 'ci-test'
+git config commit.gpgSign 'false'
 
 add_commit
 
@@ -88,6 +89,26 @@ check_result 'Some(0.0.0.1)'
 add_commit
 
 git tag '0.0.0.2' @
+
+check_result 'Some(0.0.0.2)'
+
+# Tag filtering test
+
+add_commit
+
+git tag '0.0.0.3-M1'
+
+check_result 'Some(0.0.0.3)'
+
+add_commit
+
+git tag '0.0.0.3-M2'
+
+check_result 'Some(0.0.0.3)'
+
+## Enable tag filtering of milestones
+
+echo 'ThisBuild / versionSchemeEnforcerPreviousTagFilter := _root_.io.isomarcte.sbt.version.scheme.enforcer.plugin.TagFilters.noMilestoneFilter' > tag-filter.sbt
 
 check_result 'Some(0.0.0.2)'
 

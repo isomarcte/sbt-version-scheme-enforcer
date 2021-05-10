@@ -15,7 +15,11 @@ object SbtVersionSchemeEnforcerPlugin extends AutoPlugin {
   import autoImport._
 
   override def globalSettings: Seq[Def.Setting[_]] =
-    Seq(versionSchemeEnforcerIntialVersion := None, versionSchemeEnforcerPreviousVersion := None)
+    Seq(
+      versionSchemeEnforcerIntialVersion := None,
+      versionSchemeEnforcerPreviousVersion := None,
+      versionSchemeEnforcerPreviousTagFilter := Function.const(true)
+    )
 
   override def buildSettings: Seq[Def.Setting[_]] =
     Seq(
@@ -29,7 +33,10 @@ object SbtVersionSchemeEnforcerPlugin extends AutoPlugin {
             .fold(
               Function.const(currentValue),
               vcs =>
-                vcs.previousTagVersions.headOption.fold(currentValue)(previousTag => Some(previousTag.versionString))
+                vcs
+                  .previousTagVersionsFiltered(versionSchemeEnforcerPreviousTagFilter.value)
+                  .headOption
+                  .fold(currentValue)(previousTag => Some(previousTag.versionString))
             )
         }
       }
