@@ -36,7 +36,7 @@ private[plugin] object Git {
     Try(
       sys
         .process
-        .Process(Seq("git", "--no-pager", "describe", "--abbrev=0", "--tags", "@"))
+        .Process(Seq("git", "--no-pager", "tag", "--sort=-creatordate", "--merged", "@"))
         .lineStream(VCS.silentProcessLogger)
     ) match {
       case Success(value) =>
