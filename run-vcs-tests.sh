@@ -1,10 +1,9 @@
 #!/usr/bin/env sh
 #
-# Runs tests which for the VCS systems. We have to run these in
-# temporary directories outside of the current working directory
-# because, at least in the case of git, we don't can have issues
-# creating a clean git project when we are already inside a git
-# project.
+# Runs tests for the VCS systems. We have to run these in temporary
+# directories outside of the current working directory because, at
+# least in the case of git, we can have issues creating a clean git
+# project when we are already inside a git project.
 
 set -ex
 
