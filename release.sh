@@ -9,6 +9,7 @@ then
     # Publish locally first for the scripted tests.
     sbt '+publishLocal'
     sbt ';clean;scalafixAll --check;scalafmtSbtCheck;scalafmtCheckAll;test;scripted;doc;test:doc;'
+    ./run-vcs-tests.sh
     read -r -p 'Continue with publish? Type (YES): ' PUBLISH
     if [ "${PUBLISH:?}" = 'YES' ]
     then
