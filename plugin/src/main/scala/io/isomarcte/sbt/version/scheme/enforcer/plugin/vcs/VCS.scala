@@ -32,10 +32,7 @@ sealed private[plugin] trait VCS extends Product with Serializable {
   final def previousTagVersionsTransform(transform: String => Option[String]): Stream[NumericVersion] =
     previousTagStrings
       .flatMap { value =>
-        println(s"Current value: $value")
-        val result = transform(value).fold(Stream.empty[String])(value => Stream(value))
-        println(s"Result: $result")
-        result
+        transform(value).fold(Stream.empty[String])(value => Stream(value))
       }
       .flatMap(value =>
         NumericVersion.fromString(value).fold(Function.const(Stream.empty[NumericVersion]), value => Stream(value))
