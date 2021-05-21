@@ -67,8 +67,13 @@ Name | Type | Description
 ---- | ---- | -----------
 versionSchemeEnforcerPreviousVersion | `Option[String]` | Previous version to compare against the current version for calculating binary compatibility. If you are using `git` and you have a tag as an ancestor to the current commit, this will be automatically derived.
 versionSchemeEnforcerChangeType | `Either[Throwable, VersionChangeType]` | The type of binary change. It is used to configured MiMa settings. Normally this is derived from versionSchemeEnforcerPreviousVersion and should not normally be set directly. If it results in an error and versionSchemeEnforcerCheck is run, that error is raised.
-versionSchemeEnforcerIntialVersion | `Option[String]` | The initial version which should have the versionScheme enforced. If this is set then verions <= to this version will have Mima configured to not validate any binary compatibility constraints. This is particularly useful when you are adding a new module to an exsiting project.
+versionSchemeEnforcerInitialVersion | `Option[String]` | The initial version which should have the versionScheme enforced. If this is set then verions <= to this version will have Mima configured to not validate any binary compatibility constraints. This is particularly useful when you are adding a new module to an exsiting project.
 versionSchemeEnforcerPreviousTagFilter | `String => Boolean` | A filter used when determining the previous version from a VCS tag. The selected tag will be the most recent tag, reachable from the current commit, for which this filter returns true. A common use case for this is not considering pre-release in binary compatibility checks. For example, assuming your versionScheme is Semver or Early Semver, if you are releasing 1.1.0-M3, you may want to consider binary compatibility compared to the last 1.0.x release, and permit arbitrary binary changes between various milestone releases. By default, comparing two versions which have the same numeric base version will imply that no visible changes have been made to the binary API, e.g. comparing 1.1.0-M2 to 1.1.0-M3 will yield a binary change type of Patch (assuming Semver or Early Semver.)
+
+### Deprecated ###
+Name | Type | Description
+---- | ---- | -----------
+versionSchemeEnforcerInitialVersion | `Option[String]` | DO NOT USE THIS. Use versionSchemeEnforcerInitialVersion instead. This key has a spelling error in its name (Intial -> Initial). If this is set and versionSchemeEnforcerInitialVersion is not set, this will be used as versionSchemeEnforcerInitialVersion. If versionSchemeEnforcerInitialVersion is set this will be ignored.
 
 ## Tasks ##
 

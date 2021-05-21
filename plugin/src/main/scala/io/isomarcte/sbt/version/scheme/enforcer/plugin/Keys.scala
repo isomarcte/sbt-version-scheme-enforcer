@@ -10,11 +10,22 @@ trait Keys {
   final val versionSchemeEnforcerPreviousVersion: SettingKey[Option[String]] = settingKey[Option[String]](
     "Previous version to compare against the current version for calculating binary compatibility"
   )
+
   final val versionSchemeEnforcerChangeType: SettingKey[Either[Throwable, VersionChangeType]] =
     settingKey[Either[Throwable, VersionChangeType]](
       "The type of binary change. It is used to configured MiMa settings. Normally this is derived from versionSchemeEnforcerPreviousVersion and should not normally be set directly. If it results in an error and versionSchemeEnforcerCheck is run, that error is raised."
     )
+
+  @deprecated(
+    message =
+      "DO NOT USE THIS. Use versionSchemeEnforcerInitialVersion instead. This key has a spelling error in its name (Intial -> Initial). If this is set and versionSchemeEnforcerInitialVersion is not set, this will be used as versionSchemeEnforcerInitialVersion. If versionSchemeEnforcerInitialVersion is set this will be ignored.",
+    since = "2.1.0.0"
+  )
   final val versionSchemeEnforcerIntialVersion: SettingKey[Option[String]] = settingKey[Option[String]](
+    "DO NOT USE THIS. Use versionSchemeEnforcerInitialVersion instead. This key has a spelling error in its name (Intial -> Initial). If this is set and versionSchemeEnforcerInitialVersion is not set, this will be used as versionSchemeEnforcerInitialVersion. If versionSchemeEnforcerInitialVersion is set this will be ignored."
+  )
+
+  final val versionSchemeEnforcerInitialVersion: SettingKey[Option[String]] = settingKey[Option[String]](
     "The initial version which should have the versionScheme enforced. If this is set then verions <= to this version will have Mima configured to not validate any binary compatibility constraints. This is particularly useful when you are adding a new module to an exsiting project."
   )
 
