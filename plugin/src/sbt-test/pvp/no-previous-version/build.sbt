@@ -5,7 +5,7 @@ ThisBuild / versionScheme := Some("pvp")
 lazy val root = (project in file(".")).settings(
   version := "0.1.0.0-SNAPSHOT",
   scalaVersion := "2.13.4",
-  versionSchemeEnforcerIntialVersion := Some("0.1.0.0"),
+  versionSchemeEnforcerInitialVersion := Some("0.1.0.0"),
   TaskKey[Unit]("check") := {
     val expected: Set[ModuleID] =
       Set.empty

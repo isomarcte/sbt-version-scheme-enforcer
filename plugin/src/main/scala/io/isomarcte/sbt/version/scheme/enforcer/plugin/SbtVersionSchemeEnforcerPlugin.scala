@@ -6,6 +6,7 @@ import io.isomarcte.sbt.version.scheme.enforcer.plugin.SbtVersionSchemeEnforcer.
 import io.isomarcte.sbt.version.scheme.enforcer.plugin.vcs._
 import sbt.Keys._
 import sbt._
+import scala.annotation.nowarn
 
 object SbtVersionSchemeEnforcerPlugin extends AutoPlugin {
   override def trigger: PluginTrigger = allRequirements
@@ -16,7 +17,8 @@ object SbtVersionSchemeEnforcerPlugin extends AutoPlugin {
 
   override def globalSettings: Seq[Def.Setting[_]] =
     Seq(
-      versionSchemeEnforcerIntialVersion := None,
+      (versionSchemeEnforcerIntialVersion := None: @nowarn("cat=deprecation")),
+      versionSchemeEnforcerInitialVersion := None,
       versionSchemeEnforcerPreviousVersion := None,
       versionSchemeEnforcerPreviousTagFilter := Function.const(true)
     )
@@ -44,6 +46,11 @@ object SbtVersionSchemeEnforcerPlugin extends AutoPlugin {
 
   override def projectSettings: Seq[Def.Setting[_]] =
     Seq(
+      versionSchemeEnforcerInitialVersion := {
+        versionSchemeEnforcerInitialVersion
+          .value
+          .orElse(versionSchemeEnforcerIntialVersion.value: @nowarn("cat=deprecation"))
+      },
       versionSchemeEnforcerChangeType := {
         val previousVersion: Option[String] = versionSchemeEnforcerPreviousVersion.?.value.flatten
         val currentVersion: String          = version.value
@@ -51,7 +58,7 @@ object SbtVersionSchemeEnforcerPlugin extends AutoPlugin {
         versionChangeTypeFromSchemeAndPreviousVersion(scheme, previousVersion, currentVersion)
       },
       MimaKeys.mimaReportBinaryIssues := {
-        if (shouldRunMima(versionSchemeEnforcerIntialVersion.value, version.value, versionScheme.?.value.flatten)) {
+        if (shouldRunMima(versionSchemeEnforcerInitialVersion.value, version.value, versionScheme.?.value.flatten)) {
           MimaKeys.mimaReportBinaryIssues.value
         } else {
           ()
@@ -106,7 +113,7 @@ object SbtVersionSchemeEnforcerPlugin extends AutoPlugin {
           )
       },
       MimaKeys.mimaFailOnNoPrevious := {
-        if (shouldRunMima(versionSchemeEnforcerIntialVersion.value, version.value, versionScheme.?.value.flatten)) {
+        if (shouldRunMima(versionSchemeEnforcerInitialVersion.value, version.value, versionScheme.?.value.flatten)) {
           versionSchemeEnforcerChangeType
             .value
             .fold(
@@ -124,7 +131,7 @@ object SbtVersionSchemeEnforcerPlugin extends AutoPlugin {
       },
       MimaKeys.mimaPreviousArtifacts := {
         val shouldRun: Boolean = shouldRunMima(
-          versionSchemeEnforcerIntialVersion.value,
+          versionSchemeEnforcerInitialVersion.value,
           version.value,
           versionScheme.?.value.flatten
         )
