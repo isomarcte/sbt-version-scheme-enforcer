@@ -78,6 +78,19 @@ add_commit
 
 check_result 'None'
 
+# Set versionSchemeEnforcerInitialVersion, this should be inferred as
+# the fallback fro versionSchemeEnforcerPreviousVersion
+
+echo 'ThisBuild / versionSchemeEnforcerInitialVersion := Some("1.0.0.0")' >> initial.sbt
+
+check_result 'Some(1.0.0.0)'
+
+echo 'ThisBuild / versionSchemeEnforcerPreviousVersion := Some("0.0.2.0")' >> initial.sbt
+
+check_result 'Some(0.0.2.0)'
+
+rm initial.sbt
+
 # One tag, no new commits
 
 git tag '0.0.0.1' @

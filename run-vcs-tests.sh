@@ -17,4 +17,5 @@ export PATH="${PATH:?}:${PWD:?}/vcs-tests/common"
 
 # Git #
 
-./vcs-tests/git/all.sh
+./vcs-tests/git/correct-value-tests.sh
+./vcs-tests/git/versionSchemeEnforcerCheckTest.sh
