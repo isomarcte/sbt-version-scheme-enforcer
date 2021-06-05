@@ -27,6 +27,11 @@ object SbtVersionSchemeEnforcerPlugin extends AutoPlugin {
     Seq(
       versionSchemeEnforcerPreviousVersion := {
         val currentValue: Option[String] = versionSchemeEnforcerPreviousVersion.?.value.flatten
+        val initialValue: Option[String] = versionSchemeEnforcerInitialVersion
+          .?
+          .value
+          .flatten
+          .orElse(versionSchemeEnforcerIntialVersion.?.value.flatten: @nowarn("cat=deprecation"))
         if (currentValue.isDefined) {
           currentValue
         } else {
@@ -38,7 +43,7 @@ object SbtVersionSchemeEnforcerPlugin extends AutoPlugin {
                 vcs
                   .previousTagVersionsFiltered(versionSchemeEnforcerPreviousTagFilter.value)
                   .headOption
-                  .fold(currentValue)(previousTag => Some(previousTag.versionString))
+                  .fold(initialValue)(previousTag => Some(previousTag.versionString))
             )
         }
       }
@@ -113,7 +118,9 @@ object SbtVersionSchemeEnforcerPlugin extends AutoPlugin {
           )
       },
       MimaKeys.mimaFailOnNoPrevious := {
-        if (shouldRunMima(versionSchemeEnforcerInitialVersion.value, version.value, versionScheme.?.value.flatten)) {
+        val initialVersion: Option[String] = versionSchemeEnforcerInitialVersion.value
+        val v: String                      = version.value
+        if (shouldRunMima(initialVersion, v, versionScheme.?.value.flatten)) {
           versionSchemeEnforcerChangeType
             .value
             .fold(
