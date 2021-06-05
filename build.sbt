@@ -12,6 +12,14 @@ lazy val projectUrl: URL            = url("https://github.com/isomarcte/sbt-vers
 lazy val scala212: String           = "2.12.13"
 lazy val scalaVersions: Set[String] = Set(scala212)
 
+// SBT Command Aliases //
+
+// Usually run before making a PR
+addCommandAlias(
+  "full_build",
+  ";+clean;githubWorkflowGenerate;+test;+test:doc;+versionSchemeEnforcerCheck;+scalafmtAll;+scalafmtSbt;+scalafixAll;+scripted;"
+)
+
 // ThisBuild //
 
 // General

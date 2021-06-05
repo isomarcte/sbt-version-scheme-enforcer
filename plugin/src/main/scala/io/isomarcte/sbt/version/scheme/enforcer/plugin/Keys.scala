@@ -8,7 +8,7 @@ trait Keys {
   // Settings
 
   final val versionSchemeEnforcerPreviousVersion: SettingKey[Option[String]] = settingKey[Option[String]](
-    "Previous version to compare against the current version for calculating binary compatibility"
+    "Previous version to compare against the current version for calculating binary compatibility. If this is not set manually and can not be derived from the Version Control System (VCS), then it will default to the value of versionSchemeEnforcerInitialVersion."
   )
 
   final val versionSchemeEnforcerChangeType: SettingKey[Either[Throwable, VersionChangeType]] =
