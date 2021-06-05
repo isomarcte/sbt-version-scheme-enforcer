@@ -45,7 +45,7 @@ ThisBuild / testFrameworks += new TestFramework("munit.Framework")
 
 ThisBuild / githubWorkflowPublishTargetBranches := Nil
 ThisBuild / githubWorkflowOSes := Set("macos-latest", "windows-latest", "ubuntu-latest").toList
-ThisBuild / githubWorkflowJavaVersions := Set("adopt@1.11", "adopt@1.15", "adopt@1.8").toList
+ThisBuild / githubWorkflowJavaVersions := Set("adopt@1.11", "adopt@1.16", "adopt@1.8").toList
 ThisBuild / githubWorkflowBuildPreamble :=
   List(
     WorkflowStep.Sbt(List("scalafmtSbtCheck", "scalafmtCheckAll", "versionSchemeEnforcerCheck")),
