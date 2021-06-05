@@ -44,7 +44,7 @@ ThisBuild / testFrameworks += new TestFramework("munit.Framework")
 // GithubWorkflow
 
 ThisBuild / githubWorkflowPublishTargetBranches := Nil
-ThisBuild / githubWorkflowOSes := Set("macos-latest", "windows-latest", "ubuntu-latest").toList
+ThisBuild / githubWorkflowOSes := Set("macos-latest", "ubuntu-latest").toList
 ThisBuild / githubWorkflowJavaVersions := Set("adopt@1.11", "adopt@1.15", "adopt@1.8").toList
 ThisBuild / githubWorkflowBuildPreamble :=
   List(
@@ -55,17 +55,6 @@ ThisBuild / githubWorkflowBuildPreamble :=
     WorkflowStep.Sbt(List("doc"))
   )
 ThisBuild / githubWorkflowBuildPostamble := List(WorkflowStep.Sbt(List("test:doc")))
-ThisBuild / githubWorkflowBuildMatrixExclusions :=
-  List(
-    // For some reason the `githubWorkflowCheck` step gets stuck with this
-    // particular combination.
-    MatrixExclude(Map("os" -> "windows-latest"))
-  )
-ThisBuild / githubWorkflowBuildMatrixInclusions :=
-  List(
-    // Give windows a chance with the latest LTS JVM.
-    MatrixInclude(matching = Map("java" -> "adopt@1.11"), additions = Map("os" -> "windows-latest"))
-  )
 
 // Doc Settings //
 
