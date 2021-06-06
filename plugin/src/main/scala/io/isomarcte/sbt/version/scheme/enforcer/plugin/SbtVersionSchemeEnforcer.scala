@@ -15,10 +15,12 @@ private[plugin] object SbtVersionSchemeEnforcer {
     */
   def versionChangeTypeFromSchemeAndPreviousVersion(
     scheme: Option[String],
+    initialVersion: Option[String],
     previousVersion: Option[String],
     nextVersion: String
   ): Either[Throwable, VersionChangeType] =
     previousVersion
+      .orElse(initialVersion)
       .fold(Right(Option.empty[NumericVersion]): Either[Throwable, Option[NumericVersion]])(value =>
         NumericVersion.fromStringT(value).map(value => Option(value))
       )
@@ -72,7 +74,7 @@ private[plugin] object SbtVersionSchemeEnforcer {
     * Tags, e.g. `-SNAPSHOT`, are removed from the current version. If they
     * weren't then the calculation would be wrong in certain circumstances.
     */
-  def shouldRunMima(initialVersion: Option[String], currentVersion: String, scheme: Option[String]): Boolean =
+  def isAfterInitial(initialVersion: Option[String], currentVersion: String, scheme: Option[String]): Boolean =
     scheme
       .flatMap(VersionCompatibility.apply _)
       .fold(false)(scheme =>
