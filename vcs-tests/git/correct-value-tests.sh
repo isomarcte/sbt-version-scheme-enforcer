@@ -1,4 +1,4 @@
-#!/usr/bin/env sh
+.#!/usr/bin/env sh
 #
 # Tests for git VCS system.
 
@@ -124,6 +124,52 @@ check_result 'Some(0.0.0.3)'
 echo 'ThisBuild / versionSchemeEnforcerPreviousTagFilter := _root_.io.isomarcte.sbt.version.scheme.enforcer.plugin.TagFilters.noMilestoneFilter' > tag-filter.sbt
 
 check_result 'Some(0.0.0.2)'
+
+rm tag-filter.sbt
+
+# Tag Domain Tests #
+
+git checkout -b branchA
+
+check_result 'Some(0.0.0.3)'
+
+git branch branchB 0.0.0.3-M2
+
+git checkout branchB
+
+add_commit
+
+git tag '0.0.0.4'
+
+check_result 'Some(0.0.0.4)'
+
+git checkout branchA
+
+# Default domain is TagDomain.All, so we should see 0.0.0.4 here.
+
+check_result 'Some(0.0.0.4)'
+
+echo 'ThisBuild / versionSchemeEnforcerTagDomain := _root_.io.isomarcte.sbt.version.scheme.enforcer.plugin.TagDomain.All' > tag-domain.sbt
+
+# Should be the same as default
+check_result 'Some(0.0.0.4)'
+
+echo 'ThisBuild / versionSchemeEnforcerTagDomain := _root_.io.isomarcte.sbt.version.scheme.enforcer.plugin.TagDomain.Reachable' > tag-domain.sbt
+
+# Should be 0.0.0.3-M2 because 0.0.0.4 is not reachable from branchA
+check_result 'Some(0.0.0.3)'
+
+echo 'ThisBuild / versionSchemeEnforcerTagDomain := _root_.io.isomarcte.sbt.version.scheme.enforcer.plugin.TagDomain.Unreachable' > tag-domain.sbt
+
+git --no-pager tag --sort=-creatordate --no-merged @
+
+# Should be 0.0.0.4 because all other tags are reachable from branchA
+check_result 'Some(0.0.0.4)'
+
+echo 'ThisBuild / versionSchemeEnforcerTagDomain := _root_.io.isomarcte.sbt.version.scheme.enforcer.plugin.TagDomain.Contains' > tag-domain.sbt
+
+# Should be 0.0.0.4 because it is the _only_ tag which contains this commit
+check_result 'Some(0.0.0.4)'
 
 cd "$ORIGINAL_WD"
 

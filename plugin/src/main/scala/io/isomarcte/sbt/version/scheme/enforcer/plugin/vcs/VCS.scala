@@ -1,6 +1,7 @@
 package io.isomarcte.sbt.version.scheme.enforcer.plugin.vcs
 
 import io.isomarcte.sbt.version.scheme.enforcer.core._
+import io.isomarcte.sbt.version.scheme.enforcer.plugin._
 import io.isomarcte.sbt.version.scheme.enforcer.plugin.vcs
 import scala.sys.process.ProcessLogger
 
@@ -13,13 +14,19 @@ sealed private[plugin] trait VCS extends Product with Serializable {
     */
   def asString: String
 
-  /** All the previous VCS tags reachable from this commit.
+  /** All the VCS tags to consider for calculating the previous version.
+    *
+    * @param domain The [[TagDomain]] can be used to define a domain of tags
+    *        to consider. For example, you can use [[TagDomain#All]] if you
+    *        want to consider all tags in the repository or
+    *        [[TagDomain#Reachable]] if you want to only consider tags which
+    *        are reachable (usually ancestors) of this commit.
     */
-  def previousTagStrings: Stream[String]
+  def tagStrings(domain: TagDomain): Stream[String]
 
   // final //
 
-  /** As [[#previousTagStrings]], but the tags are parsed into
+  /** As [[#tagStrings]], but the tags are parsed into
     * [[NumericVersion]] values. Non numeric versions are filtered from the
     * `Stream`.
     *
@@ -29,8 +36,8 @@ sealed private[plugin] trait VCS extends Product with Serializable {
     *        cause it to be transformed/replaced. This is a generic type of
     *        transform which can be used for filtering and transformation.
     */
-  final def previousTagVersionsTransform(transform: String => Option[String]): Stream[NumericVersion] =
-    previousTagStrings
+  final def tagVersionsTransform(transform: String => Option[String], domain: TagDomain): Stream[NumericVersion] =
+    tagStrings(domain)
       .flatMap { value =>
         transform(value).fold(Stream.empty[String])(value => Stream(value))
       }
@@ -38,17 +45,19 @@ sealed private[plugin] trait VCS extends Product with Serializable {
         NumericVersion.fromString(value).fold(Function.const(Stream.empty[NumericVersion]), value => Stream(value))
       )
 
-  /** As [[#previousTagVersionsTransform]], but specialized to the common use
+  /** As [[#tagVersionsTransform]], but specialized to the common use
     * case of merely filtering out some tags. No transformation is done in on
     * the tag value itself other than converting it to a [[NumericVersion]].
     */
-  final def previousTagVersionsFiltered(tagFilter: String => Boolean): Stream[NumericVersion] =
-    previousTagVersionsTransform(value =>
-      if (tagFilter(value)) {
-        Some(value)
-      } else {
-        None
-      }
+  final def tagVersionsFiltered(tagFilter: String => Boolean, domain: TagDomain): Stream[NumericVersion] =
+    tagVersionsTransform(
+      value =>
+        if (tagFilter(value)) {
+          Some(value)
+        } else {
+          None
+        },
+      domain
     )
 }
 
@@ -60,7 +69,7 @@ private[plugin] object VCS {
   case object Git extends VCS {
     override val asString: String = "git"
 
-    override lazy val previousTagStrings: Stream[String] = vcs.Git.previousGitTagStrings
+    override def tagStrings(domain: TagDomain): Stream[String] = vcs.Git.gitTagStrings(domain)
   }
 
   /** Determine if the current project is using a supported [[VCS]]. Return an
