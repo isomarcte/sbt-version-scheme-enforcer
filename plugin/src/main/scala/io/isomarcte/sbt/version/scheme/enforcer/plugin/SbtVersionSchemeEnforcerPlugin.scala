@@ -151,7 +151,7 @@ object SbtVersionSchemeEnforcerPlugin extends AutoPlugin {
         if (shouldRun && currentValue.isEmpty && (Compile / publishArtifact).value) {
           versionSchemeEnforcerPreviousVersion
             .value
-            .fold(currentValue)(previousVersion => Set(organization.value %% name.value % previousVersion))
+            .fold(currentValue)(previousVersion => Set(organization.value %% moduleName.value % previousVersion))
         } else {
           currentValue
         }
