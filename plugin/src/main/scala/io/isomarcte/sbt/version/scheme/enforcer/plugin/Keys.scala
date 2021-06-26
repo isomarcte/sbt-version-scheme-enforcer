@@ -33,6 +33,10 @@ trait Keys {
     "A filter used when determining the previous version from a VCS tag. The selected tag will be the most recent tag, reachable from the current commit, for which this filter returns true. A common use case for this is not considering pre-release in binary compatibility checks. For example, assuming your versionScheme is Semver or Early Semver, if you are releasing 1.1.0-M3, you may want to consider binary compatibility compared to the last 1.0.x release, and permit arbitrary binary changes between various milestone releases. By default, comparing two versions which have the same numeric base version will imply that no visible changes have been made to the binary API, e.g. comparing 1.1.0-M2 to 1.1.0-M3 will yield a binary change type of Patch (assuming Semver or Early Semver.)"
   )
 
+  final val versionSchemeEnforcerTagDomain: SettingKey[TagDomain] = settingKey[TagDomain](
+    "The domain of VCS tags to consider when looking for previous releases to use in the binary compatibility check. For example, this can be TagDomain.All to consider all tags on the repository, or TagDomain.Reachable to only consider tags which are reachable (ancestors) of the current commit. The later case can be useful when you have multiple branches which should not be considered directly related for the purposes of binary compatibility. TagDomain.All is the default as of 2.1.1.0. The behavior prior to 2.1.1.0 was equivalent to TagDomain.Reachable."
+  )
+
   // Tasks
 
   final val versionSchemeEnforcerCheck: TaskKey[Unit] = taskKey[Unit](
