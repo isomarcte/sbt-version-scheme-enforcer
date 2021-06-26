@@ -1,5 +1,5 @@
 addSbtPlugin("ch.epfl.scala"             % "sbt-scalafix"                       % "0.9.29")
-addSbtPlugin("com.codecommit"            % "sbt-github-actions"                 % "0.10.1")
+addSbtPlugin("com.codecommit"            % "sbt-github-actions"                 % "0.12.0")
 addSbtPlugin("com.github.cb372"          % "sbt-explicit-dependencies"          % "0.2.16")
 addSbtPlugin("com.jsuereth"              % "sbt-pgp"                            % "2.1.1")
 addSbtPlugin("com.timushev.sbt"          % "sbt-updates"                        % "0.5.3")
