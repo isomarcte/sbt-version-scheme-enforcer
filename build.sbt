@@ -125,7 +125,13 @@ lazy val core: Project = project
   .settings(
     name := s"${projectName}-core",
     libraryDependencies ++= List(coursierG %% coursierVersionsA % coursierVersionsV) ++
-      List(scalametaG %% munitA % munitV).map(_ % Test),
+      List(
+        scalacheckG %% scalacheckA      % scalacheckV,
+        scalametaG  %% munitA           % munitV,
+        typelevelG  %% catsKernelA      % catsV,
+        typelevelG  %% catsLawsA        % catsV,
+        typelevelG  %% disciplineMunitA % disciplineMunitV
+      ).map(_ % Test),
     docSettings
   )
 

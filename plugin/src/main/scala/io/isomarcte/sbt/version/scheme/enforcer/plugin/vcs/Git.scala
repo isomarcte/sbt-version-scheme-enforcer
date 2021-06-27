@@ -32,16 +32,22 @@ private[plugin] object Git {
   /** If the current project is using Git for VCS, get a `Stream` of all the
     * previous tags reachable from this commit.
     */
-  lazy val previousGitTagStrings: Stream[String] =
+  lazy val previousGitTagStrings: Either[Throwable, Vector[String]] =
     Try(
       sys
         .process
-        .Process(Seq("git", "--no-pager", "tag", "--sort=-creatordate", "--merged", "@"))
+        .Process(
+          Seq(
+            "git",
+            "--no-pager",
+            "tag",
+            "--format=%(refname:strip=2) %(creatordate:iso-strict)",
+            "--sort=-creatordate",
+            "--merged",
+            "@"
+          )
+        )
         .lineStream(VCS.silentProcessLogger)
-    ) match {
-      case Success(value) =>
-        value
-      case _ =>
-        Stream.empty[String]
-    }
+        .toVector
+    ).toEither
 }

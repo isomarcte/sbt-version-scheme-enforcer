@@ -111,17 +111,17 @@ add_commit
 
 git tag '0.0.0.3-M1'
 
-check_result 'Some(0.0.0.3)'
+check_result 'Some(0.0.0.3-M1)'
 
 add_commit
 
 git tag '0.0.0.3-M2'
 
-check_result 'Some(0.0.0.3)'
+check_result 'Some(0.0.0.3-M2)'
 
 ## Enable tag filtering of milestones
 
-echo 'ThisBuild / versionSchemeEnforcerPreviousTagFilter := _root_.io.isomarcte.sbt.version.scheme.enforcer.plugin.TagFilters.noMilestoneFilter' > tag-filter.sbt
+echo 'ThisBuild / versionSchemeEnforcerPreviousVCSTagFilter := _root_.io.isomarcte.sbt.version.scheme.enforcer.plugin.TagFilters.noMilestoneTagFilter' > tag-filter.sbt
 
 check_result 'Some(0.0.0.2)'
 
