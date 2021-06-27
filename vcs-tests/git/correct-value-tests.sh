@@ -131,7 +131,7 @@ rm tag-filter.sbt
 
 git checkout -b branchA
 
-check_result 'Some(0.0.0.3)'
+check_result 'Some(0.0.0.3-M2)'
 
 git branch branchB 0.0.0.3-M2
 
