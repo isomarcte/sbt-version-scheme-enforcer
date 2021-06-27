@@ -21,7 +21,8 @@ object SbtVersionSchemeEnforcerPlugin extends AutoPlugin {
     Seq(
       (versionSchemeEnforcerIntialVersion := None: @nowarn("cat=deprecation")),
       versionSchemeEnforcerInitialVersion := None,
-      versionSchemeEnforcerPreviousVersion := None
+      versionSchemeEnforcerPreviousVersion := None,
+      versionSchemeEnforcerTagDomain := TagDomain.All
     )
 
   override def buildSettings: Seq[Def.Setting[_]] =
@@ -47,7 +48,7 @@ object SbtVersionSchemeEnforcerPlugin extends AutoPlugin {
               Function.const(currentValue),
               vcs =>
                 vcs
-                  .previousTagVersionsFiltered(filter)
+                  .tagVersionsFiltered(filter, versionSchemeEnforcerTagDomain.value)
                   .toOption
                   .flatMap(_.lastOption)
                   .fold(initialValue)(previousTag => Some(previousTag.value))

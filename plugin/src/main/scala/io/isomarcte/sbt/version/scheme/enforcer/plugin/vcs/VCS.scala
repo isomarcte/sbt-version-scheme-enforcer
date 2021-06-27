@@ -2,6 +2,7 @@ package io.isomarcte.sbt.version.scheme.enforcer.plugin.vcs
 
 import io.isomarcte.sbt.version.scheme.enforcer.core._
 import io.isomarcte.sbt.version.scheme.enforcer.core.vcs._
+import io.isomarcte.sbt.version.scheme.enforcer.plugin._
 import io.isomarcte.sbt.version.scheme.enforcer.plugin.vcs
 import scala.collection.immutable.SortedSet
 import scala.sys.process.ProcessLogger
@@ -11,7 +12,7 @@ import scala.sys.process.ProcessLogger
   *
   * @define outerError The outer `Either`'s left value indicates an error
   *                    reading the raw tag input from
-  *                    [[#previousTagStringsWithError]].
+  *                    [[#tagStrings]].
   */
 sealed private[plugin] trait VCS extends Product with Serializable {
 
@@ -19,13 +20,18 @@ sealed private[plugin] trait VCS extends Product with Serializable {
     */
   def asString: String
 
-  /** All the previous VCS tags reachable from this commit or an error if
-    * attempting to read the tags failed.
+  /** All the VCS tags to consider for calculating the previous version.
     *
     * @note This result may have some order (defined by the implementation)
     *       which is significant.
+    *
+    * @param domain The [[TagDomain]] can be used to define a domain of tags
+    *        to consider. For example, you can use [[TagDomain#All]] if you
+    *        want to consider all tags in the repository or
+    *        [[TagDomain#Reachable]] if you want to only consider tags which
+    *        are reachable (usually ancestors) of this commit.
     */
-  def previousTagStringsWithError: Either[Throwable, Vector[String]]
+  def tagStrings(domain: TagDomain): Either[Throwable, Vector[String]]
 
   /** An implementation dependent function to convert a particular VCS system's
     * textual representation of a tag into a [[Tag]] data type.
@@ -38,8 +44,8 @@ sealed private[plugin] trait VCS extends Product with Serializable {
     *
     * @note $outerError
     */
-  final def tagsWithErrors: Either[Throwable, Vector[Either[String, Tag]]] =
-    previousTagStringsWithError.map(
+  final def tagsWithErrors(domain: TagDomain): Either[Throwable, Vector[Either[String, Tag]]] =
+    tagStrings(domain).map(
       _.foldLeft(Vector.empty[Either[String, Tag]]) { case (acc, value) =>
         acc ++ Vector(tagStringToTag(value))
       }
@@ -49,8 +55,8 @@ sealed private[plugin] trait VCS extends Product with Serializable {
     *
     * @note $outerError
     */
-  final def tags: Either[Throwable, SortedSet[Tag]] =
-    tagsWithErrors.map(
+  final def tags(domain: TagDomain): Either[Throwable, SortedSet[Tag]] =
+    tagsWithErrors(domain).map(
       _.foldLeft(SortedSet.empty[Tag]) { case (acc, value) =>
         value.fold(Function.const(acc), value => acc ++ SortedSet(value))
       }
@@ -66,25 +72,28 @@ sealed private[plugin] trait VCS extends Product with Serializable {
     *
     * @note $outerError
     */
-  final def previousTagVersionsTransform(transform: Tag => Option[Tag]): Either[Throwable, SortedSet[Tag]] =
-    tags.map(
+  final def tagVersionsTransform(transform: Tag => Option[Tag], domain: TagDomain): Either[Throwable, SortedSet[Tag]] =
+    tags(domain).map(
       _.flatMap { value =>
         transform(value).fold(SortedSet.empty[Tag])(value => SortedSet(value))
       }
     )
 
-  /** As [[#previousTagVersionsTransform]], but specialized to the common use
-    * case of merely filtering out some tags.
+  /** As [[#tagVersionsTransform]], but specialized to the common use
+    * case of merely filtering out some tags. No transformation is done in on
+    * the tag value itself other than converting it to a [[NumericVersion]].
     *
     * @note $outerError
     */
-  final def previousTagVersionsFiltered(tagFilter: Tag => Boolean): Either[Throwable, SortedSet[Tag]] =
-    previousTagVersionsTransform(value =>
-      if (tagFilter(value)) {
-        Some(value)
-      } else {
-        None
-      }
+  final def tagVersionsFiltered(tagFilter: Tag => Boolean, domain: TagDomain): Either[Throwable, SortedSet[Tag]] =
+    tagVersionsTransform(
+      value =>
+        if (tagFilter(value)) {
+          Some(value)
+        } else {
+          None
+        },
+      domain
     )
 }
 
@@ -96,7 +105,7 @@ private[plugin] object VCS {
   case object Git extends VCS {
     override val asString: String = "git"
 
-    override lazy val previousTagStringsWithError: Either[Throwable, Vector[String]] = vcs.Git.previousGitTagStrings
+    override def tagStrings(domain: TagDomain): Either[Throwable, Vector[String]] = vcs.Git.gitTagStrings(domain)
 
     override def tagStringToTag(value: String): Either[String, Tag] =
       value.trim.split(' ').toList match {

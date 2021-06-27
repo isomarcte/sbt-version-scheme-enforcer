@@ -1,6 +1,7 @@
 package io.isomarcte.sbt.version.scheme.enforcer.plugin.vcs
 
 import _root_.io.isomarcte.sbt.version.scheme.enforcer.core.SafeEquals._
+import io.isomarcte.sbt.version.scheme.enforcer.plugin.TagDomain
 import scala.util.Success
 import scala.util.Try
 
@@ -32,7 +33,7 @@ private[plugin] object Git {
   /** If the current project is using Git for VCS, get a `Stream` of all the
     * previous tags reachable from this commit.
     */
-  lazy val previousGitTagStrings: Either[Throwable, Vector[String]] =
+  def gitTagStrings(domain: TagDomain): Either[Throwable, Vector[String]] =
     Try(
       sys
         .process
@@ -42,12 +43,27 @@ private[plugin] object Git {
             "--no-pager",
             "tag",
             "--format=%(refname:strip=2) %(creatordate:iso-strict)",
-            "--sort=-creatordate",
-            "--merged",
-            "@"
-          )
+            "--sort=-creatordate"
+          ) ++ domainToArgSeq(domain)
         )
         .lineStream(VCS.silentProcessLogger)
         .toVector
     ).toEither
+
+  /** Translate the [[TagDomain]] in to a `Seq` arguments for the `git` command
+    * line invocation.
+    */
+  private[this] def domainToArgSeq(domain: TagDomain): Seq[String] =
+    domain match {
+      case TagDomain.All =>
+        Seq.empty[String]
+      case TagDomain.Reachable =>
+        Seq("--merged", "@")
+      case TagDomain.Unreachable =>
+        Seq("--no-merged", "@")
+      case TagDomain.Contains =>
+        Seq("--contains", "@")
+      case TagDomain.NoContains =>
+        Seq("--no-contains", "@")
+    }
 }

@@ -70,6 +70,7 @@ versionSchemeEnforcerChangeType                 | `Either[Throwable, VersionChan
 versionSchemeEnforcerInitialVersion             | `Option[String]`                       | The initial version which should have the versionScheme enforced. If this is set then verions <= to this version will have Mima configured to not validate any binary compatibility constraints. This is particularly useful when you are adding a new module to an exsiting project.
 versionSchemeEnforcerPreviousVCSTagFilter       | `Tag => Boolean`                       | A filter used when determining the previous version from a VCS tag. The selected tag will be the most recent tag, reachable from the current commit, for which this filter returns true. A common use case for this is not considering pre-release in binary compatibility checks. For example, assuming your versionScheme is Semver or Early Semver, if you are releasing 1.1.0-M3, you may want to consider binary compatibility compared to the last 1.0.x release, and permit arbitrary binary changes between various milestone releases. By default, comparing two versions which have the same numeric base version will imply that no visible changes have been made to the binary API, e.g. comparing 1.1.0-M2 to 1.1.0-M3 will yield a binary change type of Patch (assuming Semver or Early Semver). This setting operates directly on the Tag data type which gives full access to the Tag metadata. If you only want to inspect the String representation of a Tag, you can use versionSchemeEnforcerPreviousVCSTagStringFilter. At most one of these settings may be defined. Defining both will result in an error. If none are set then no filtering will be done on tags, which is equivalent to a filter with the definition `Function.const(true)`
 versionSchemeEnforcerPreviousVCSTagStringFilter | `String => Boolean`                    | A filter used when determining the previous version from a VCS tag. The selected tag will be the most recent tag, reachable from the current commit, for which this filter returns true. A common use case for this is not considering pre-release in binary compatibility checks. For example, assuming your versionScheme is Semver or Early Semver, if you are releasing 1.1.0-M3, you may want to consider binary compatibility compared to the last 1.0.x release, and permit arbitrary binary changes between various milestone releases. By default, comparing two versions which have the same numeric base version will imply that no visible changes have been made to the binary API, e.g. comparing 1.1.0-M2 to 1.1.0-M3 will yield a binary change type of Patch (assuming Semver or Early Semver). This setting operates only on the String representation of a Tag. If you need to inspect the full metadata of a VCS tag, then you can use versionSchemeEnforcerPreviousVCSTagFilter. At most one of these settings may be defined. Defining both will result in an error. If none are set then no filtering will be done on tags, which is equivalent to a filter with the definition `Function.const(true)`
+versionSchemeEnforcerTagDomain                  | `TagDomain`                            | The domain of VCS tags to consider when looking for previous releases to use in the binary compatibility check. For example, this can be TagDomain.All to consider all tags on the repository, or TagDomain.Reachable to only consider tags which are reachable (ancestors) of the current commit. The later case can be useful when you have multiple branches which should not be considered directly related for the purposes of binary compatibility. TagDomain.All is the default as of 2.1.1.0. The behavior prior to 2.1.1.0 was equivalent to TagDomain.Reachable.
 
 
 ### Deprecated ###
@@ -119,6 +120,18 @@ import _root_.io.isomarcte.sbt.version.scheme.enforcer.plugin.TagFilters
 ThisBuild / versionSchemeEnforcerPreviousTagFilter := TagFilters.noMilestoneFilter
 
 ```
+
+## TagDomain ##
+
+`versionSchemeEnforcerTagDomain` describes which VCS tags to consider when attempting to automatically calculate the previous version. The default value is `TagDomain.All`, the possible values are described here.
+
+Name        | Description
+----------- | -----------
+All         | Consider all tags on the repository, even if they are not ancestors of the current commit.
+Reachable   | Only consider tags which are reachable (ancestors) of the current commit.
+Unreachable | Only consider tags which are unreachable (not ancestors) of the current commit. I don't know why you'd use this.
+Contains    | Only consider tags which contain this commit. I don't know why you'd use this.
+NoContains  | Only consider tags which do not contain this commit. This is similar to All, but will never include any tags which are present on this commit. In typical usage of this plugin it is unlikely this circumstance will occur.
 
 ## Why Does This Plugin Exist ##
 

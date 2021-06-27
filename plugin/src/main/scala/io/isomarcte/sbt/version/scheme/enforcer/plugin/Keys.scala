@@ -44,6 +44,10 @@ trait Keys {
       ).mkString(" ")
     )
 
+  final val versionSchemeEnforcerTagDomain: SettingKey[TagDomain] = settingKey[TagDomain](
+    "The domain of VCS tags to consider when looking for previous releases to use in the binary compatibility check. For example, this can be TagDomain.All to consider all tags on the repository, or TagDomain.Reachable to only consider tags which are reachable (ancestors) of the current commit. The later case can be useful when you have multiple branches which should not be considered directly related for the purposes of binary compatibility. TagDomain.All is the default as of 2.1.1.0. The behavior prior to 2.1.1.0 was equivalent to TagDomain.Reachable."
+  )
+
   // Deprecated Settings
 
   @deprecated(
