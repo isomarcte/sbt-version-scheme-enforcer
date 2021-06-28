@@ -229,4 +229,9 @@ object VersionChangeType {
         ): Either[String, VersionChangeType]
     }
   }
+
+  // Typeclass Instances //
+
+  implicit val orderingInstance: Ordering[VersionChangeType] =
+    Ordering.by(_.toString)
 }
