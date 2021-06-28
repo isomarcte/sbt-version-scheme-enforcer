@@ -2,13 +2,11 @@ package io.isomarcte.sbt.version.scheme.enforcer.plugin
 
 import com.typesafe.tools.mima.plugin._
 import io.isomarcte.sbt.version.scheme.enforcer.core._
-import io.isomarcte.sbt.version.scheme.enforcer.core.vcs._
 import io.isomarcte.sbt.version.scheme.enforcer.plugin.SbtVersionSchemeEnforcer._
 import io.isomarcte.sbt.version.scheme.enforcer.plugin.vcs._
 import sbt.Keys._
 import sbt._
 import scala.annotation.nowarn
-import scala.collection.immutable.SortedSet
 
 object SbtVersionSchemeEnforcerPlugin extends AutoPlugin {
   override def trigger: PluginTrigger = allRequirements
@@ -22,17 +20,13 @@ object SbtVersionSchemeEnforcerPlugin extends AutoPlugin {
       (versionSchemeEnforcerIntialVersion := None: @nowarn("cat=deprecation")),
       versionSchemeEnforcerInitialVersion := None,
       versionSchemeEnforcerPreviousVersion := None,
+      versionSchemeEnforcerPreviousTagFilter := Function.const(true),
       versionSchemeEnforcerTagDomain := TagDomain.All
     )
 
   override def buildSettings: Seq[Def.Setting[_]] =
     Seq(
       versionSchemeEnforcerPreviousVersion := {
-        val filter: Tag => Boolean = determineVCSTagFilter(
-          versionSchemeEnforcerPreviousVCSTagFilter.?.value,
-          versionSchemeEnforcerPreviousVCSTagStringFilter.?.value,
-          versionSchemeEnforcerPreviousTagFilter.?.value: @nowarn("cat=deprecation")
-        )
         val currentValue: Option[String] = versionSchemeEnforcerPreviousVersion.?.value.flatten
         val initialValue: Option[String] = versionSchemeEnforcerInitialVersion
           .?
@@ -48,10 +42,12 @@ object SbtVersionSchemeEnforcerPlugin extends AutoPlugin {
               Function.const(currentValue),
               vcs =>
                 vcs
-                  .tagVersionsFiltered(filter, versionSchemeEnforcerTagDomain.value)
-                  .toOption
-                  .flatMap(_.lastOption)
-                  .fold(initialValue)(previousTag => Some(previousTag.value))
+                  .tagVersionsFiltered(
+                    versionSchemeEnforcerPreviousTagFilter.value,
+                    versionSchemeEnforcerTagDomain.value
+                  )
+                  .headOption
+                  .fold(initialValue)(previousTag => Some(previousTag.versionString))
             )
         }
       }
@@ -165,41 +161,4 @@ object SbtVersionSchemeEnforcerPlugin extends AutoPlugin {
         }
       }
     )
-
-  // Private
-
-  private[this] def liftStringFilterToTagFilter(f: String => Boolean): Tag => Boolean = (t: Tag) => f(t.value)
-
-  private[this] def determineVCSTagFilterE(
-    vcsTagFilter: Option[Tag => Boolean],
-    vcsTagStringFilter: Option[String => Boolean],
-    tagFilter: Option[String => Boolean]
-  ): Either[Throwable, Tag => Boolean] =
-    (
-      vcsTagFilter.map(value => ("versionSchemeEnforcerPreviousVCSTagFilter", value)).toList ++
-        vcsTagStringFilter
-          .map(value => ("versionSchemeEnforcerPreviousVCSTagStringFilter", liftStringFilterToTagFilter(value)))
-          .toList ++
-        tagFilter.map(value => ("versionSchemeEnforcerPreviousTagFilter", liftStringFilterToTagFilter(value))).toList
-    ).foldLeft((SortedSet.empty[String], ((_: Tag) => true))) { case ((filterNames, _), (name, filter)) =>
-      // Add the filter name to the set of names, and replace the
-      // filter. We will error if more than one filter is defined, so
-      // replacing the current filter is fine.
-      (filterNames ++ SortedSet(name), filter)
-    } match {
-      case (definedFilters, _) if definedFilters.size > 1 =>
-        Left(
-          new RuntimeException(
-            s"""At most one of these settings may be defined, but ${definedFilters.mkString(", ")} were all defined."""
-          )
-        ): Either[Throwable, Tag => Boolean]
-      case (_, filter) =>
-        Right(filter)
-    }
-
-  private[this] def determineVCSTagFilter(
-    vcsTagFilter: Option[Tag => Boolean],
-    vcsTagStringFilter: Option[String => Boolean],
-    tagFilter: Option[String => Boolean]
-  ): Tag => Boolean = determineVCSTagFilterE(vcsTagFilter, vcsTagStringFilter, tagFilter).fold(e => throw e, identity)
 }
