@@ -1,6 +1,6 @@
 package io.isomarcte.sbt.version.scheme.enforcer.core
 
-import coursier.version._
+import coursier.version.{Version => CVersion, _}
 
 /** A wrapper type for [[coursier.version.Version]] which properly handles PVP
   * ordering. As of io.get-coursier:versions_2.12:0.3.0 does not.
@@ -9,7 +9,7 @@ sealed trait SchemedVersion extends Ordered[SchemedVersion] {
   import SchemedVersion._
 
   def scheme: VersionCompatibility
-  def version: Version
+  def version: CVersion
 
   final override def compare(that: SchemedVersion): Int =
     (this.scheme, that.scheme) match {
@@ -27,15 +27,15 @@ sealed trait SchemedVersion extends Ordered[SchemedVersion] {
 object SchemedVersion {
 
   final private[this] case class SchemedVersionImpl(
-    override val version: Version,
+    override val version: CVersion,
     override val scheme: VersionCompatibility
   ) extends SchemedVersion
 
-  def fromVersionAndScheme(version: Version, scheme: VersionCompatibility): SchemedVersion =
+  def fromVersionAndScheme(version: CVersion, scheme: VersionCompatibility): SchemedVersion =
     SchemedVersionImpl(version, scheme)
 
   def fromVersionStringAndScheme(version: String, scheme: VersionCompatibility): SchemedVersion =
-    fromVersionAndScheme(Version(version), scheme)
+    fromVersionAndScheme(CVersion(version), scheme)
 
   /** Helper function because it is awkward to handle the fact that
     * [[coursier.version.VersionCompatibility]] has two representations for

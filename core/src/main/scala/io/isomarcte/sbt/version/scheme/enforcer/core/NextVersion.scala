@@ -39,7 +39,7 @@ object NextVersion {
     */
   def minimumNextVersionFromString(
     versionCompatibility: VersionCompatibility
-  )(versionChangeType: VersionChangeType, currentVersion: String): Either[String, Version] =
+  )(versionChangeType: VersionChangeType, currentVersion: String): Either[String, CVersion] =
     minimumNextVersion(versionCompatibility)(versionChangeType, CVersion(currentVersion))
 
   /** As [[#minimumNextVersion]], but takes a [[NumericVersion]] directly. This

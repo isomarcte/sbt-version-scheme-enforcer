@@ -91,6 +91,12 @@ object VersionComponent {
         Left(s"Failed to parse ${value} as PreRelease VersionComponent. PreRelease VersionComponent's must only contain [0-9A-Za-z-] and can not start with multiple leading 0s or be empty. ${whitespaceWarningString}")
       }
     }
+
+    def unsafeFromString(value: String): PreRelease =
+      fromString(value).fold(
+        e => throw new IllegalArgumentException(e),
+        identity
+      )
   }
 
   sealed abstract class MetaData extends VersionComponent {

@@ -1,5 +1,7 @@
 package io.isomarcte.sbt.version.scheme.enforcer.core
 
+import io.isomarcte.sbt.version.scheme.enforcer.core.SafeEquals._
+
 sealed abstract class SemanticVersion extends Ordered[SemanticVersion] {
   def major: BigInt
   def minor: BigInt
@@ -37,6 +39,18 @@ sealed abstract class SemanticVersion extends Ordered[SemanticVersion] {
       case otherwise =>
         otherwise
     }
+
+  final def changeType(that: SemanticVersion): VersionChangeType =
+    if(major =!= that.major) {
+      VersionChangeType.Major
+    } else if (minor =!= that.minor){
+      VersionChangeType.Minor
+    } else {
+      // Valid even if the versions are equal because a Patch change type
+      // indicates no visible binary changes, which is true when comparing a
+      // version to itself.
+      VersionChangeType.Patch
+    }
 }
 
 object SemanticVersion {
@@ -48,10 +62,22 @@ object SemanticVersion {
     override val preReleaseComponents: Vector[VersionComponent.PreRelease]
   ) extends SemanticVersion
 
-  def apply(major: BigInt, minor: BigInt, patch: BigInt, preReleaseComponents: Vector[VersionComponent.PreRelease]): Either[String, SemanticVersion] =
+  def from(major: BigInt, minor: BigInt, patch: BigInt, preReleaseComponents: Vector[VersionComponent.PreRelease]): Either[String, SemanticVersion] =
     if (major >= 0 && minor >= 0 && patch >= 0) {
       Right(SemanticVersionImpl(major, minor, patch, preReleaseComponents))
     } else {
       Left(s"Semantic Versioning does not permit negative version number components. ${major}.${minor}.${patch}")
     }
+
+  def from(major: BigInt, minor: BigInt, patch: BigInt): Either[String, SemanticVersion] =
+    from(major, minor, patch, Vector.empty)
+
+  def unsafeFrom(major: BigInt, minor: BigInt, patch: BigInt, preReleaseComponents: Vector[VersionComponent.PreRelease]): SemanticVersion =
+    from(major, minor, patch, preReleaseComponents).fold(
+      e => throw new IllegalArgumentException(e),
+      identity
+    )
+
+  def unsafeFrom(major: BigInt, minor: BigInt, patch: BigInt): SemanticVersion =
+    unsafeFrom(major, minor, patch, Vector.empty)
 }

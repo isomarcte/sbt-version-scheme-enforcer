@@ -1,6 +1,6 @@
 package io.isomarcte.sbt.version.scheme.enforcer.core
 
-import coursier.version.{Version => CVersion, _}
+import coursier.version.{Version => CVersion}
 
 /** A representation of a version with only numeric components.
   *

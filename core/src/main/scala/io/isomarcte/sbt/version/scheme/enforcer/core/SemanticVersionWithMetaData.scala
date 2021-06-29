@@ -19,7 +19,7 @@ object SemanticVersionWithMetaData {
   private[this] val semanticVersionDefinition: String =
     "A semantic version number may only have three sections. The number containing _exactly_ 3 version numbers, e.g. 1.2.3. An optional pre-release value containing 0 or more '.' separated pre-release identifiers. An optional metadata section containing 0 or '.' separated metadata identifiers."
 
-  def fromComponents(value: Vector[VersionComponent]): Either[String, SemanticVersionWithMetaData] =
+  def from(value: Vector[VersionComponent]): Either[String, SemanticVersionWithMetaData] =
     value.toList match {
       case (major: VersionComponent.NonNegativeIntegral) :: (minor: VersionComponent.NonNegativeIntegral) :: (patch: VersionComponent.NonNegativeIntegral) :: rest =>
         val (preRelease, a) = rest.span{
@@ -56,7 +56,7 @@ object SemanticVersionWithMetaData {
             if (b.nonEmpty) {
               Left(s"Invalid semantic version: Found values after parsing metadata for ${value}. ${semanticVersionDefinition}")
             } else {
-              SemanticVersion(
+              SemanticVersion.from(
                 major.asBigInt, minor.asBigInt, patch.asBigInt, preRelease
               ).map(semanticVersion =>
                 SemanticVersionWithMetaDataImpl(
@@ -72,7 +72,7 @@ object SemanticVersionWithMetaData {
     }
 
   def fromVersion(value: Version): Either[String, SemanticVersionWithMetaData] =
-    fromComponents(value.components)
+    from(value.components)
 
   def fromString(value: String): Either[String, SemanticVersionWithMetaData] =
     fromVersion(Version(value))
