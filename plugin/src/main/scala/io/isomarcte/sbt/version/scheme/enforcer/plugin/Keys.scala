@@ -3,6 +3,7 @@ package io.isomarcte.sbt.version.scheme.enforcer.plugin
 import io.isomarcte.sbt.version.scheme.enforcer.core._
 import io.isomarcte.sbt.version.scheme.enforcer.core.vcs._
 import sbt._
+import scala.collection.immutable.SortedSet
 
 trait Keys {
 
@@ -31,7 +32,7 @@ trait Keys {
   private[this] val vcsTagFilterSharedDescriptionSuffix: String =
     "At most one of these settings may be defined. Defining both will result in an error. If none are set then no filtering will be done on tags, which is equivalent to a filter with the definition `Function.const(true)`"
 
-  final val versionSchemeEnforcerPreviousVCSTagFilter: SettingKey[SortedSet[Tag] => Boolean] = settingKey[SortedSet[Tag] => Boolean](
+  final val versionSchemeEnforcerPreviousVCSTagFilter: SettingKey[String => SortedSet[Tag] => Boolean] = settingKey[String => SortedSet[Tag] => Boolean](
     List(
       vcsTagFilterSharedDescription,
       "This setting operates directly on the Tag data type which gives full access to the Tag metadata. If you only want to inspect the String representation of a Tag, you can use versionSchemeEnforcerPreviousVCSTagStringFilter.",
@@ -39,8 +40,8 @@ trait Keys {
     ).mkString(" ")
   )
 
-  final val versionSchemeEnforcerPreviousVCSTagStringFilter: SettingKey[SortedSet[String] => Boolean] =
-    settingKey[String => Boolean](
+  final val versionSchemeEnforcerPreviousVCSTagStringFilter: SettingKey[String => SortedSet[String] => Boolean] =
+    settingKey[String => SortedSet[String] => Boolean](
       List(
         vcsTagFilterSharedDescription,
         "This setting operates only on the String representation of a Tag. If you need to inspect the full metadata of a VCS tag, then you can use versionSchemeEnforcerPreviousVCSTagFilter.",

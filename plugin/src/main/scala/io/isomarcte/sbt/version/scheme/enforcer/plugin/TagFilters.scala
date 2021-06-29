@@ -1,19 +1,20 @@
 package io.isomarcte.sbt.version.scheme.enforcer.plugin
 
+import scala.collection.immutable.SortedSet
+import io.isomarcte.sbt.version.scheme.enforcer.core._
 import io.isomarcte.sbt.version.scheme.enforcer.core.vcs._
 
 /** Commonly used filters for [[Keys#versionSchemeEnforcerPreviousTagFilter]].
   */
 object TagFilters {
 
-  /** Filter which drops tags which represent a milestone release,
-    * e.g. 1.1.0.0-M1.
-    */
-  val noMilestoneTagFilter: Tag => Boolean = { (value: Tag) =>
-    if (value.value.matches(""".*-M\d+$""")) {
-      false
-    } else {
-      true
+  private[this] val milestoneRegex: String = """.*-M\d+$"""
+
+  def nearestChangeType(
+    changeTypes: NonEmptySet[VersionChangeType]
+  ): VersionScheme => String => SortedSet[Tag] => SortedSet[String] = { (versionScheme: VersionScheme) => (currentVersion: String) => (tags: SortedSet[Tag]) =>
+    tags.foldLeft(SortedSet.empty[String]){
+
     }
   }
 
@@ -22,6 +23,10 @@ object TagFilters {
     */
   @deprecated(message = "Please use noMilestoneTagFilter instead.", since = "2.1.1.0")
   lazy val noMilestoneFilter: String => Boolean = { (value: String) =>
-    noMilestoneTagFilter(Tag(value))
+    if (value.matches(milestoneRegex)) {
+      false
+    } else {
+      true
+    }
   }
 }

@@ -20,23 +20,51 @@ object VersionScheme {
     override val asString: String = "early-semver"
   }
 
-  sealed abstract class Unknown extends VersionScheme {
-    override def toString: String = s"Unknown(asString = ${asString})"
+  case object Always extends VersionScheme {
+    override val asString: String = "always"
   }
 
-  private[this] object Unknown {
-    final case class UnknownImpl(override val asString: String) extends Unknown
+  case object Strict extends VersionScheme {
+    override val asString: String = "strict"
   }
 
-  private[enforcer] def fromCoursierVersionCompatibility(
-    value: VersionCompatibility
-  ): VersionScheme = {
-    value match {
-      case VersionCompatibility.Default | VersionCompatibility.PackVer => PVP
-      case VersionCompatibility.EarlySemVer => EarlySemVer
-      case VersionCompatibility.SemVerSpec => SemVer
+  // Typeclass Instances //
+
+  implicit val orderingInstance: Ordering[VersionScheme] =
+    Ordering.by(_.toString)
+
+  // Private //
+
+  private[enforcer] def fromString(
+    value: String
+  ): Either[String, VersionScheme] = {
+    value.trim.toLowerCase match {
+      case PVP.asString | "default" => Right(PVP)
+      case EarlySemVer.asString => Right(EarlySemVer)
+
+      // Special case due to deprecated, but still valid, version scheme setup
+      // in Coursier Versions.
+      case SemVer.asString | "semver-spec" => Right(SemVer)
+      case Always.asString => Right(Always)
+      case Strict.asString => Right(Strict)
       case otherwise =>
-        Unknown.UnknownImpl(otherwise.name)
+        Left(s"Unknown version scheme: ${otherwise}. If this scheme as well defined semantics, consider opening an issue and/or pull request to https://github.com/isomarcte/sbt-version-scheme-enforcer.")
     }
   }
+
+  private[enforcer] def toCoursierVersionCompatibility(
+    value: VersionScheme
+  ): VersionCompatibility =
+    value match {
+      case PVP =>
+        VersionCompatibility.PackVer
+      case EarlySemVer =>
+        VersionCompatibility.EarlySemVer
+      case SemVer =>
+        VersionCompatibility.SemVerSpec
+      case Always =>
+        VersionCompatibility.Always
+      case Strict =>
+        VersionCompatibility.Strict
+    }
 }

@@ -5,6 +5,9 @@ sealed abstract class Version extends Product with Serializable {
 
   // Final //
 
+  final lazy val components: Vector[VersionComponent] =
+    VersionComponent.fromVersionString(value)
+
   override final def toString: String = s"Version(value = ${value})"
 }
 

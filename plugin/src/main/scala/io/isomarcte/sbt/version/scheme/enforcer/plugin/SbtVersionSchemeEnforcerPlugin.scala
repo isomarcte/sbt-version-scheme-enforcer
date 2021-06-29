@@ -28,7 +28,7 @@ object SbtVersionSchemeEnforcerPlugin extends AutoPlugin {
   override def buildSettings: Seq[Def.Setting[_]] =
     Seq(
       versionSchemeEnforcerPreviousVersion := {
-        val filter: Tag => Boolean = determineVCSTagFilter(
+        val filter: String => SortedSet[Tag] => Boolean = determineVCSTagFilter(
           versionSchemeEnforcerPreviousVCSTagFilter.?.value,
           versionSchemeEnforcerPreviousVCSTagStringFilter.?.value,
           versionSchemeEnforcerPreviousTagFilter.?.value: @nowarn("cat=deprecation")
@@ -171,8 +171,8 @@ object SbtVersionSchemeEnforcerPlugin extends AutoPlugin {
   private[this] def liftStringFilterToTagFilter(f: String => Boolean): Tag => Boolean = (t: Tag) => f(t.value)
 
   private[this] def determineVCSTagFilterE(
-    vcsTagFilter: Option[Tag => Boolean],
-    vcsTagStringFilter: Option[String => Boolean],
+    vcsTagFilter: Option[String => SortedSet[Tag] => Boolean],
+    vcsTagStringFilter: Option[String => SortedSet[String] => Boolean],
     tagFilter: Option[String => Boolean]
   ): Either[Throwable, Tag => Boolean] =
     (
@@ -198,8 +198,9 @@ object SbtVersionSchemeEnforcerPlugin extends AutoPlugin {
     }
 
   private[this] def determineVCSTagFilter(
-    vcsTagFilter: Option[Tag => Boolean],
-    vcsTagStringFilter: Option[String => Boolean],
+    vcsTagFilter: Option[String => SortedSet[Tag] => Boolean],
+    vcsTagStringFilter: Option[String => SortedSet[String] => Boolean],
     tagFilter: Option[String => Boolean]
-  ): Tag => Boolean = determineVCSTagFilterE(vcsTagFilter, vcsTagStringFilter, tagFilter).fold(e => throw e, identity)
+  ): String => SortedSet[Tag] => Boolean =
+    determineVCSTagFilterE(vcsTagFilter, vcsTagStringFilter, tagFilter).fold(e => throw e, identity)
 }

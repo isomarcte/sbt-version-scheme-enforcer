@@ -1,37 +1,79 @@
 package io.isomarcte.sbt.version.scheme.enforcer.core
 
 import scala.util.Try
-import scala.collection.immutable.SortedSet
+import io.isomarcte.sbt.version.scheme.enforcer.core.SafeEquals._
 
-sealed abstract class VersionComponent extends Product with Serializable {
+sealed abstract class VersionComponent extends Product with Serializable with Ordered[VersionComponent] {
+  import VersionComponent._
+
   def value: String
 
   // Final //
 
   final def trimmedValue: String =
     value.trim
+
+  override final def compare(that: VersionComponent): Int =
+    (this, that) match {
+      case (a: NonNegativeIntegral, b: NonNegativeIntegral) =>
+        a.value.compare(b.value)
+      case (a: PreRelease, b: PreRelease) =>
+        a.value.compare(b.value)
+      case (a: MetaData, b: MetaData) =>
+        a.value.compare(b.value)
+      case (a: Unknown, b: Unknown) =>
+        a.value.compare(b.value)
+      case (_: NonNegativeIntegral, _) =>
+        1
+      case (_: PreRelease, _: NonNegativeIntegral) =>
+        -1
+      case (_: PreRelease, _) =>
+        1
+      case (_: MetaData, _: NonNegativeIntegral | _: PreRelease) =>
+        -1
+      case (_: MetaData, _) =>
+        1
+      case (_: Unknown, _) =>
+        -1
+    }
 }
 
 object VersionComponent {
 
-  private[this] val preReleaseMetadataValidPattern: String = """[1-9A-Za-z-][0-9A-Za-z-]+"""
+  private[this] val preReleaseMetadataValidPattern: String = """[0-9A-Za-z-]+"""
+  private[this] val preReleaseAndMetaDataValidCharPred: Char => Boolean = (c: Char) => (c.isLetterOrDigit || c == '.' || c == '-')
+  private[this] val whitespaceWarningString: String = "They _can not_ include whitespace. If you are trying to parse a version string which may have leading or trailing whitespace you should be using VersionComponent.fromVersionString rather than the individual component methods."
 
-  sealed abstract class PositiveIntegral extends VersionComponent {
+  sealed abstract class NonNegativeIntegral extends VersionComponent {
     def asBigInt: BigInt
 
     // Final //
 
     override final def toString: String =
-      s"PositiveIntegral(value = ${value}, asBigInt = ${asBigInt})"
+      s"NonNegativeIntegral(value = ${value}, asBigInt = ${asBigInt})"
   }
 
-  object PositiveIntegral {
-    private[this] final case class PositiveIntegralImpl(override val value: String, override val asBigInt: BigInt) extends PositiveIntegral
+  object NonNegativeIntegral {
+    private[this] final case class NonNegativeIntegralImpl(override val value: String, override val asBigInt: BigInt) extends NonNegativeIntegral
 
-    def fromString(value: String): Either[Throwable, PositiveIntegral] =
-      Try(BigInt(value.trim)).toEither.map(bigInt =>
-        PositiveIntegralImpl(value, bigInt)
-      )
+    def fromString(value: String): Either[String, NonNegativeIntegral] =
+      if (value.isEmpty) {
+        Left("Can not creat NonNegativeIntegral (Numeric) VersionComponent from empty value."): Either[String, NonNegativeIntegral]
+      } else if (value.startsWith("00")) {
+        Left(s"NonNegativeIntegral (Numeric) VersionComponent values may not begin with multiple leading 0s according to SemVer spec: ${value}")
+      } else if (value.matches("""\d+""")){
+        Try(BigInt(value)).toEither.fold(
+          e => Left(s"Failed when attempting to parse ${value} as non-negative integral value: ${e.getLocalizedMessage}"),
+          bigInt =>
+          if (bigInt < BigInt(0)) {
+            Left(s"Negative NonNegativeIntegral (Numeric) values are not valid: ${value} (parsed as ${bigInt})")
+          } else {
+            Right(NonNegativeIntegralImpl(value, bigInt))
+          }
+        )
+      } else {
+        Left(s"NonNegativeIntegral (Numeric) values must contain only digits. ${whitespaceWarningString}")
+      }
   }
 
   sealed abstract class PreRelease extends VersionComponent {
@@ -42,12 +84,13 @@ object VersionComponent {
   object PreRelease {
     private[this] final case class PreReleaseImpl(override val value: String) extends PreRelease
 
-    def fromString(value: String): Either[Throwable, PreRelease] =
-      if (value.matches(preReleaseMetadataValidPattern)) {
+    def fromString(value: String): Either[String, PreRelease] = {
+      if (value.matches(preReleaseMetadataValidPattern) && value.contains("00") === false) {
         Right(PreReleaseImpl(value))
       } else {
-        Left(new IllegalArgumentException(s"Invalid PreRelease VersionComponent. A PreRelease VersionComponent must match ${preReleaseMetadataValidPattern}"))
+        Left(s"Failed to parse ${value} as PreRelease VersionComponent. PreRelease VersionComponent's must only contain [0-9A-Za-z-] and can not start with multiple leading 0s or be empty. ${whitespaceWarningString}")
       }
+    }
   }
 
   sealed abstract class MetaData extends VersionComponent {
@@ -58,12 +101,13 @@ object VersionComponent {
   object MetaData {
     private[this] final case class MetaDataImpl(override val value: String) extends MetaData
 
-    def fromString(value: String): Either[Throwable, MetaData] =
-      if (value.matches(preReleaseMetadataValidPattern)) {
+    def fromString(value: String): Either[String, MetaData] = {
+      if (value.matches(preReleaseMetadataValidPattern) && value.contains("00") === false) {
         Right(MetaDataImpl(value))
       } else {
-        Left(new IllegalArgumentException(s"Invalid MetaData VersionComponent. A MetaData VersionComponent must match ${preReleaseMetadataValidPattern}"))
+        Left(s"Failed to parse ${value} as MetaData VersionComponent. MetaData VersionComponent's must only contain [0-9A-Za-z-] and can not start with a leading 0 or be empty. ${whitespaceWarningString}")
       }
+    }
   }
 
   sealed abstract class Unknown extends VersionComponent {
@@ -75,94 +119,90 @@ object VersionComponent {
     private[VersionComponent] final case class UnknownImpl(override val value: String) extends Unknown
   }
 
-  private[this] sealed abstract class VersionComponentParseState extends Product with Serializable
-
-  private[this] object VersionComponentParseState {
-    case object ParsingVersionNumber extends VersionComponentParseState
-    case object ParsingPreRelease extends VersionComponentParseState
-    case object ParsingMetaData extends VersionComponentParseState
-
-    def validPreReleaseOrMetaDataChar(value: Char): Boolean =
-      value.isLetterOrDigit || value == '-'
-  }
-
   def fromVersionString(
     value: String
   ): Vector[VersionComponent] = {
+    def parseSection(value: String, constructor: String => Either[String, VersionComponent]): Either[String, Vector[VersionComponent]] =
+      if (value.isEmpty) {
+        Right(Vector.empty[VersionComponent])
+      } else {
+        val components: Vector[String] = value.split('.').toVector
+
+        if (components.exists(_.isEmpty)) {
+          // If any component is empty, then we have a section of the input
+          // string with two or more neighboring . characters,
+          // e.g. `1..0`. This makes treating the input as . separated
+          // NonNegativeIntegral components invalid.
+          Left("An empty component section exists, but that is not valid.")
+        } else {
+          Right(
+            components.foldLeft(Vector.empty[VersionComponent]){
+              case (acc, value) =>
+                acc ++ Vector(
+                  constructor(value).getOrElse(
+                    Unknown.UnknownImpl(value))
+                )
+            }
+          )
+        }
+      }
 
     def parseNumeric(value: String): Vector[VersionComponent] =
-      value.split('.').toVector.map(value =>
-        PositiveIntegral.fromString(value).fold(
-          Function.const(Unknown.UnknownImpl(value)),
-          identity
-        )
+      parseSection(value, NonNegativeIntegral.fromString).fold(
+        Function.const(Vector(Unknown.UnknownImpl(value))),
+        identity
       )
 
     def parsePreRelease(value: String): Vector[VersionComponent] =
-      value.split('.').toVector.map(value =>
-        PreRelease.fromString(value).fold(
-          Function.const(Unknown.UnknownImpl(value)),
-          identity
-        )
+      parseSection(value, PreRelease.fromString).fold(
+        // Have to re-add the removed "-".
+        Function.const(Vector(Unknown.UnknownImpl("-" ++ value))),
+        identity
       )
 
-    value.trim.span(_ != '-') match {
-      case (numeric, rest) =>
-        rest.span(_ != '+') match {
-          case (prerelease, metadata) =>
+    def parseMetaData(value: String): Vector[VersionComponent] =
+      parseSection(value, MetaData.fromString).fold(
+        // Have to re-add the removed "+".
+        Function.const(Vector(Unknown.UnknownImpl("+" ++ value))),
+        identity
+      )
 
-        }
-    }
+    val (numeric, preReleaseAndMetaData) = value.trim.span((c: Char) => c.isDigit || c == '.')
+    val (preRelease, metaDataAndRest) =
+      if (preReleaseAndMetaData.startsWith("-")) {
+        preReleaseAndMetaData.drop(1).span((c: Char) => preReleaseAndMetaDataValidCharPred(c))
+      } else {
+        // Pre-release data _must_ start with a '-', thus no pre-release data
+        // was found.
+        ("", preReleaseAndMetaData)
+      }
+    val (metaData, rest) =
+      if (metaDataAndRest.startsWith("+")) {
+        metaDataAndRest.drop(1).span((c: Char) => preReleaseAndMetaDataValidCharPred(c))
+      } else {
+        // MetaData data _must_ start with a '+', thus no metadata was found.
+        ("", metaDataAndRest)
+      }
 
-    // def parseSection(spanPred: Char => Boolean, componentConstructor: String => Either[Throwable, VersionComponent], rest: Vector[Char]): Option[(VersionComponent, Vector[Char])] = {
-    //   val (result, nextRest): (Vector[Char], Vector[Char]) = rest.span(spanPred)
-    //   if (result.isEmpty) {
-    //     Option.empty[(VersionComponent, Vector[Char])]
-    //   } else {
-    //     componentConstructor(result.mkString) match {
-    //       case Left(_) =>
-    //         Some((Unknown.UnknownImpl(rest.mkString), Vector.empty[Char]))
-    //       case Right(value) =>
-    //         Some((value, nextRest))
-    //     }
-    //   }
-    // }
+    val numericSection: Vector[VersionComponent] =
+      parseNumeric(numeric)
 
-    // @scala.annotation.tailrec
-    // def loop(state: VersionComponentParseState, acc: Vector[VersionComponent], rest: Vector[Char]): Vector[VersionComponent] =
-    //   state match {
-    //     case VersionComponentParseState.ParsingVersionNumber =>
-    //       parseSection(
-    //         _.isDigit,
-    //         PositiveIntegral.fromString,
-    //         rest
-    //       ).fold(
-    //         loop(VersionComponentParseState.ParsingPreRelease, acc, rest)
-    //       ){
-    //         case (component, nextRest) =>
-    //           val nextAcc: Vector[VersionComponent] =
-    //             acc ++ Vector(component)
-    //           nextRest.headOption match {
-    //             case Some('.') =>
-    //               loop(state, nextAcc, nextRest.tail)
-    //             case Some('-') =>
-    //               loop(VersionComponentParseState.ParsingPreRelease, nextAcc, nextRest.tail)
-    //             case Some('+') =>
-    //               loop(VersionComponentParseState.ParsingMetaData, nextAcc, nextRest.tail)
-    //             case Some(_) =>
-    //               nextAcc ++ Unknown.UnknownImpl(nextRest.mkString)
-    //             case None =>
-    //               nextAcc
-    //           }
-    //       }
-    //     case VersionComponentParseState.ParsingPreRelease =>
-    //       parseSection(
-    //         VersionComponentParseState.validPreReleaseOrMetaDataChar,
-    //         PreRelease.fromString,
-    //         rest
-    //       ).fold(
-    //         loop(VersionComponentParseState.ParsingMetaData, acc, rest)
-    //       )
-    //   }
+    val preReleaseSection: Vector[VersionComponent] =
+      parsePreRelease(preRelease)
+
+    val metaDataSection: Vector[VersionComponent] =
+      parseMetaData(metaData)
+
+    val restSection: Vector[VersionComponent] =
+      if (rest.isEmpty) {
+        Vector.empty
+      } else {
+        Vector(Unknown.UnknownImpl(rest))
+      }
+
+    numericSection ++ preReleaseSection ++ metaDataSection ++ restSection
   }
+
+  final def fromVersion(value: Version): Vector[VersionComponent] =
+    fromVersionString(value.value)
 }
