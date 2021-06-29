@@ -1,6 +1,6 @@
 package io.isomarcte.sbt.version.scheme.enforcer.core
 
-import coursier.version._
+import coursier.version.{Version => CVersion, _}
 import io.isomarcte.sbt.version.scheme.enforcer.core.SafeEquals._
 
 /** Functions for calculating the minimum next version for a given version scheme.
@@ -28,7 +28,7 @@ object NextVersion {
     */
   def minimumNextVersion(
     versionCompatibility: VersionCompatibility
-  )(versionChangeType: VersionChangeType, currentVersion: Version): Either[String, Version] =
+  )(versionChangeType: VersionChangeType, currentVersion: CVersion): Either[String, CVersion] =
     NumericVersion
       .fromCoursierVersion(currentVersion)
       .flatMap(numericVersion => minimumNextNumericVersion(versionCompatibility)(versionChangeType, numericVersion))
@@ -40,7 +40,7 @@ object NextVersion {
   def minimumNextVersionFromString(
     versionCompatibility: VersionCompatibility
   )(versionChangeType: VersionChangeType, currentVersion: String): Either[String, Version] =
-    minimumNextVersion(versionCompatibility)(versionChangeType, Version(currentVersion))
+    minimumNextVersion(versionCompatibility)(versionChangeType, CVersion(currentVersion))
 
   /** As [[#minimumNextVersion]], but takes a [[NumericVersion]] directly. This
     * is sometimes more convenient if the [[coursier.version.Version]] has
