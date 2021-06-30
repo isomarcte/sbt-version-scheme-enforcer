@@ -111,17 +111,17 @@ add_commit
 
 git tag '0.0.0.3-M1'
 
-check_result 'Some(0.0.0.3)'
+check_result 'Some(0.0.0.3-M1)'
 
 add_commit
 
 git tag '0.0.0.3-M2'
 
-check_result 'Some(0.0.0.3)'
+check_result 'Some(0.0.0.3-M2)'
 
 ## Enable tag filtering of milestones
 
-echo 'ThisBuild / versionSchemeEnforcerPreviousTagFilter := _root_.io.isomarcte.sbt.version.scheme.enforcer.plugin.TagFilters.noMilestoneFilter' > tag-filter.sbt
+echo 'ThisBuild / versionSchemeEnforcerPreviousVCSTagFilter := _root_.io.isomarcte.sbt.version.scheme.enforcer.plugin.TagFilters.noMilestoneTagFilter' > tag-filter.sbt
 
 check_result 'Some(0.0.0.2)'
 
@@ -131,7 +131,7 @@ rm tag-filter.sbt
 
 git checkout -b branchA
 
-check_result 'Some(0.0.0.3)'
+check_result 'Some(0.0.0.3-M2)'
 
 git branch branchB 0.0.0.3-M2
 
@@ -157,7 +157,7 @@ check_result 'Some(0.0.0.4)'
 echo 'ThisBuild / versionSchemeEnforcerTagDomain := _root_.io.isomarcte.sbt.version.scheme.enforcer.plugin.TagDomain.Reachable' > tag-domain.sbt
 
 # Should be 0.0.0.3-M2 because 0.0.0.4 is not reachable from branchA
-check_result 'Some(0.0.0.3)'
+check_result 'Some(0.0.0.3-M2)'
 
 echo 'ThisBuild / versionSchemeEnforcerTagDomain := _root_.io.isomarcte.sbt.version.scheme.enforcer.plugin.TagDomain.Unreachable' > tag-domain.sbt
 

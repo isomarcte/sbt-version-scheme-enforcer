@@ -33,18 +33,22 @@ private[plugin] object Git {
   /** If the current project is using Git for VCS, get a `Stream` of all the
     * previous tags reachable from this commit.
     */
-  def gitTagStrings(domain: TagDomain): Stream[String] =
+  def gitTagStrings(domain: TagDomain): Either[Throwable, Vector[String]] =
     Try(
       sys
         .process
-        .Process(Seq("git", "--no-pager", "tag", "--sort=-creatordate") ++ domainToArgSeq(domain))
+        .Process(
+          Seq(
+            "git",
+            "--no-pager",
+            "tag",
+            "--format=%(refname:strip=2) %(creatordate:iso-strict)",
+            "--sort=-creatordate"
+          ) ++ domainToArgSeq(domain)
+        )
         .lineStream(VCS.silentProcessLogger)
-    ) match {
-      case Success(value) =>
-        value
-      case _ =>
-        Stream.empty[String]
-    }
+        .toVector
+    ).toEither
 
   /** Translate the [[TagDomain]] in to a `Seq` arguments for the `git` command
     * line invocation.
