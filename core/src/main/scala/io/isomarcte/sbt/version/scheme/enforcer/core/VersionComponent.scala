@@ -67,15 +67,7 @@ sealed abstract class VersionComponent extends Product with Serializable with Or
 
 object VersionComponent {
 
-  /** A regular expression for matching non-numeric pre-release values according
-    * to SemVer. That is, if the component is not entirely numeric (it
-    * contains one more letters or - characters), then it must match this
-    * pattern.
-    *
-    * If the component only contains digits, it must match
-    * [[#numericNoLeadingZerosRegex]].
-    */
-  private[this] val preReleaseValidNonNumericRegex: Regex = """^[0-9A-Za-z-]+$""".r
+
 
   /** A regular expression for matching non-numeric metadata values according to
     * SemVer.
