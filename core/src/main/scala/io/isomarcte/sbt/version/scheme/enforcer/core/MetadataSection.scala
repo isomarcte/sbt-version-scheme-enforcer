@@ -1,5 +1,7 @@
 package io.isomarcte.sbt.version.scheme.enforcer.core
 
+import io.isomarcte.sbt.version.scheme.enforcer.core.SafeEquals._
+
 sealed abstract class MetadataSection extends Product with Serializable {
   def value: Vector[MetadataComponent]
 
@@ -25,7 +27,10 @@ object MetadataSection {
     MetadataSectionImpl(value)
 
   def fromString(value: String): Either[String, MetadataSection] =
-    if (value.startsWith("+")) {
+    if (value === "+") {
+      // Valid, but empty, metadata
+      Right(empty)
+    } else if (value.startsWith("+")) {
       value.drop(1).split('.').foldLeft(Right(Vector.empty): Either[String, Vector[MetadataComponent]]){
         case (acc, value) =>
           acc.flatMap(acc =>

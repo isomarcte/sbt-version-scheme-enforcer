@@ -1,5 +1,7 @@
 package io.isomarcte.sbt.version.scheme.enforcer.core
 
+import io.isomarcte.sbt.version.scheme.enforcer.core.SafeEquals._
+
 sealed abstract class PreReleaseSection extends Product with Serializable {
   def value: Vector[PreReleaseComponent]
 
@@ -25,7 +27,10 @@ object PreReleaseSection {
     PreReleaseSectionImpl(value)
 
   def fromString(value: String): Either[String, PreReleaseSection] =
-    if (value.startsWith("-")) {
+    if (value === "-") {
+      // Valid, but empty, pre-release
+      Right(empty)
+    } else if (value.startsWith("-")) {
       value.drop(1).split('.').foldLeft(Right(Vector.empty[PreReleaseComponent]): Either[String, Vector[PreReleaseComponent]]){
         case (acc, value) =>
           acc.flatMap(acc =>
