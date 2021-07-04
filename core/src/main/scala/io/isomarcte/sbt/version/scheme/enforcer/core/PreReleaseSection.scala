@@ -8,11 +8,7 @@ sealed abstract class PreReleaseSection extends Product with Serializable {
   // final //
 
   final def canonicalString: String =
-    if (value.isEmpty) {
-      ""
-    } else {
-      s"""-${value.map(_.value).mkString(".")}"""
-    }
+    s"""-${value.map(_.value).mkString(".")}"""
 
   override final def toString: String =
     s"PreReleaseSection(${canonicalString})"
