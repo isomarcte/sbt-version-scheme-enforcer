@@ -39,6 +39,19 @@ object PreReleaseComponent {
 
   object NumericPreReleaseComponent {
     private[PreReleaseComponent] final case class NumericPreReleaseComponentImpl(override val numericValue: BigInt) extends NumericPreReleaseComponent
+
+    def fromBigInt(value: BigInt): Either[String, NumericPreReleaseComponent] =
+      if (value >= BigInt(0)) {
+        Right(NumericPreReleaseComponentImpl(value))
+      } else {
+        Left(s"NumericPreReleaseComponent values must be >= 0: ${value}")
+      }
+
+    def unsafeFromBigInt(value: BigInt): NumericPreReleaseComponent =
+      fromBigInt(value).fold(
+        e => throw new IllegalArgumentException(e),
+        identity
+      )
   }
 
   sealed abstract class NonNumericPreReleaseComponent extends PreReleaseComponent {
@@ -51,14 +64,31 @@ object PreReleaseComponent {
 
   object NonNumericPreReleaseComponent {
     private[PreReleaseComponent] final case class NonNumericPreReleaseComponentImpl(override val value: String) extends NonNumericPreReleaseComponent
+
+    def fromString(value: String): Either[String, NonNumericPreReleaseComponent] =
+      if(numericRegex.pattern.matcher(value).matches) {
+        Left(s"Invalid NonNumericPreReleaseComponent, but it may be a valid NumericPreReleaseComponent. If you wish to parse this just as a general PreReleaseComponent (numeric or otherwise), you should call fromString on PreReleaseComponent, not on PreReleaseComponent.NonNumericPreReleaseComponent: ${value}")
+      } else if (preReleaseValidNonNumericRegex.pattern.matcher(value).matches) {
+        Right(NonNumericPreReleaseComponent.NonNumericPreReleaseComponentImpl(value))
+      } else {
+        Left(s"Invalid PreReleaseComponent value (must match ${preReleaseValidNonNumericRegex} and can not contain leading zeros): ${value}")
+      }
+
+    def unsafeFromString(value: String): PreReleaseComponent =
+      fromString(value).fold(
+        e => throw new IllegalArgumentException(e),
+        identity
+      )
   }
 
   def fromBigInt(value: BigInt): Either[String, PreReleaseComponent] =
-    if (value >= BigInt(0)) {
-      Right(NumericPreReleaseComponent.NumericPreReleaseComponentImpl(value))
-    } else {
-      Left(s"NumericPreReleaseComponent values must be >= 0: ${value}")
-    }
+    NumericPreReleaseComponent.fromBigInt(value).map(identity /* widen */)
+
+  def unsafeFromBigInt(value: BigInt): PreReleaseComponent =
+    fromBigInt(value).fold(
+      e => throw new IllegalArgumentException(e),
+      identity
+    )
 
   def fromString(value: String): Either[String, PreReleaseComponent] =
     if(numericRegex.pattern.matcher(value).matches) {
@@ -72,11 +102,15 @@ object PreReleaseComponent {
           fromBigInt
         )
       }
-    } else if (preReleaseValidNonNumericRegex.pattern.matcher(value).matches) {
-      Right(NonNumericPreReleaseComponent.NonNumericPreReleaseComponentImpl(value))
     } else {
-      Left(s"Invalid PreReleaseComponent value (must match ${preReleaseValidNonNumericRegex} and can not contain leading zeros): ${value}")
+      NonNumericPreReleaseComponent.fromString(value).map(identity /* widen */)
     }
+
+  def unsafeFromString(value: String): PreReleaseComponent =
+    fromString(value).fold(
+      e => throw new IllegalArgumentException(e),
+      identity
+    )
 
   implicit val orderingInstance: Ordering[PreReleaseComponent] =
     new Ordering[PreReleaseComponent]{
