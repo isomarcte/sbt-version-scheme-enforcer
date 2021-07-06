@@ -6,7 +6,7 @@ import cats.kernel._
 
 private[enforcer] trait OrphanInstances {
 
-  private[this] val genMetadataComponentChar: Gen[Char] = Gen.oneOf(
+  private[this] val genMetadataVersionTokenChar: Gen[Char] = Gen.oneOf(
     (Range('0', '9').toVector ++ Range('A', 'Z').toVector ++ Range('a', 'z').toVector ++ Vector('-'.toInt))
       .map(_.toChar)
   )
@@ -14,11 +14,11 @@ private[enforcer] trait OrphanInstances {
   /** The same character set is valid for both metadata and pre-release, though
     * pre-release has additional rules if the first character is a '0'.
     */
-  private[this] def genPreReleaseComponentChar: Gen[Char] =
-    genMetadataComponentChar
+  private[this] def genPreReleaseVersionTokenChar: Gen[Char] =
+    genMetadataVersionTokenChar
 
-  private[this] val genMetadataComponentString: Gen[String] =
-    Gen.nonEmptyListOf(genMetadataComponentChar).map(_.mkString)
+  private[this] val genMetadataVersionTokenString: Gen[String] =
+    Gen.nonEmptyListOf(genMetadataVersionTokenChar).map(_.mkString)
 
   private[this] val numericWithLeadingZerosRegex: Regex =
     """0\d+""".r
@@ -26,11 +26,11 @@ private[enforcer] trait OrphanInstances {
   private[this] val genNonNegativeBigInt: Gen[BigInt] =
     Arbitrary.arbitrary[BigInt].map(_.abs)
 
-  private[this] def genPreReleaseComponentString: Gen[String] =
+  private[this] def genPreReleaseVersionTokenString: Gen[String] =
     Gen.frequency(
       (4 -> genNonNegativeBigInt.map(_.toString)),
       (6 ->
-        Gen.nonEmptyListOf(genPreReleaseComponentChar).map(_.mkString).map(value =>
+        Gen.nonEmptyListOf(genPreReleaseVersionTokenChar).map(_.mkString).map(value =>
           if (numericWithLeadingZerosRegex.pattern.matcher(value).matches) {
             value.last.toString
           } else {
@@ -48,68 +48,68 @@ private[enforcer] trait OrphanInstances {
         A.compare(x, y)
     }
 
-  implicit final val arbMetadataComponent: Arbitrary[MetadataComponent] =
-    Arbitrary(genMetadataComponentString.map(MetadataComponent.unsafeFromString))
+  implicit final val arbMetadataVersionToken: Arbitrary[MetadataVersionToken] =
+    Arbitrary(genMetadataVersionTokenString.map(MetadataVersionToken.unsafeFromString))
 
-  implicit final val cogenMetadataComponent: Cogen[MetadataComponent] =
+  implicit final val cogenMetadataVersionToken: Cogen[MetadataVersionToken] =
     Cogen[String].contramap(_.value)
 
-  implicit final val catsInstancesForMetadataComponent: Hash[MetadataComponent] with Order[MetadataComponent] =
-    catsHashAndOrderFromOrdering[MetadataComponent]
+  implicit final val catsInstancesForMetadataVersionToken: Hash[MetadataVersionToken] with Order[MetadataVersionToken] =
+    catsHashAndOrderFromOrdering[MetadataVersionToken]
 
   implicit final val arbMetadataSection: Arbitrary[MetadataSection] =
     Arbitrary(
-      Arbitrary.arbitrary[Vector[MetadataComponent]].map(MetadataSection.apply)
+      Arbitrary.arbitrary[Vector[MetadataVersionToken]].map(MetadataSection.apply)
     )
 
   implicit final val cogenMetadataSection: Cogen[MetadataSection] =
-    Cogen[Vector[MetadataComponent]].contramap(_.value)
+    Cogen[Vector[MetadataVersionToken]].contramap(_.value)
 
   implicit final val catsInstancesForMetadataSection: Hash[MetadataSection] with Order[MetadataSection] =
     catsHashAndOrderFromOrdering[MetadataSection]
 
-  implicit final val arbNumericComponent: Arbitrary[NumericComponent] =
+  implicit final val arbNumericVersionToken: Arbitrary[NumericVersionToken] =
     Arbitrary(
-      genNonNegativeBigInt.map(NumericComponent.unsafeFromBigInt)
+      genNonNegativeBigInt.map(NumericVersionToken.unsafeFromBigInt)
     )
 
-  implicit final val cogenNumericComponent: Cogen[NumericComponent] =
+  implicit final val cogenNumericVersionToken: Cogen[NumericVersionToken] =
     Cogen[BigInt].contramap(_.value)
 
-  implicit final val catsInstancesForNumericComponent: Hash[NumericComponent] with Order[NumericComponent] =
-    catsHashAndOrderFromOrdering[NumericComponent]
+  implicit final val catsInstancesForNumericVersionToken: Hash[NumericVersionToken] with Order[NumericVersionToken] =
+    catsHashAndOrderFromOrdering[NumericVersionToken]
 
   implicit final val arbNumericSection: Arbitrary[NumericSection] =
     Arbitrary(
-      Arbitrary.arbitrary[Vector[NumericComponent]].map(NumericSection.apply)
+      Arbitrary.arbitrary[Vector[NumericVersionToken]].map(NumericSection.apply)
     )
 
   implicit final val cogenNumericSection: Cogen[NumericSection] =
-    Cogen[Vector[NumericComponent]].contramap(_.value)
+    Cogen[Vector[NumericVersionToken]].contramap(_.value)
 
   implicit final val catsInstancesForNumericSection: Hash[NumericSection] with Order[NumericSection] =
     catsHashAndOrderFromOrdering[NumericSection]
 
-  implicit final val arbPreReleaseComponent: Arbitrary[PreReleaseComponent] =
+  implicit final val arbPreReleaseVersionToken: Arbitrary[PreReleaseVersionToken] =
     Arbitrary(
-      genPreReleaseComponentString.map(
-        PreReleaseComponent.unsafeFromString
+      genPreReleaseVersionTokenString.map(
+        PreReleaseVersionToken.unsafeFromString
       )
     )
 
-  implicit final val cogenPreReleaseComponent: Cogen[PreReleaseComponent] =
+  implicit final val cogenPreReleaseVersionToken: Cogen[PreReleaseVersionToken] =
     Cogen[String].contramap(_.value)
 
-  implicit final val catsInstancesForPreReleaseComponent: Hash[PreReleaseComponent] with Order[PreReleaseComponent] =
-    catsHashAndOrderFromOrdering[PreReleaseComponent]
+  implicit final val catsInstancesForPreReleaseVersionToken: Hash[PreReleaseVersionToken] with Order[PreReleaseVersionToken] =
+    catsHashAndOrderFromOrdering[PreReleaseVersionToken]
 
   implicit final val arbPreReleaseSection: Arbitrary[PreReleaseSection] =
     Arbitrary(
-      Arbitrary.arbitrary[Vector[PreReleaseComponent]].map(PreReleaseSection.apply)
+      Arbitrary.arbitrary[Vector[PreReleaseVersionToken]].map(PreReleaseSection.apply)
     )
 
   implicit final val cogenPreReleaseSection: Cogen[PreReleaseSection] =
-    Cogen[Vector[PreReleaseComponent]].contramap(_.value)
+    Cogen[Vector[PreReleaseVersionToken]].contramap(_.value)
 
   implicit final val catsInstancesForPreReleaseSection: Hash[PreReleaseSection] with Order[PreReleaseSection] =
     catsHashAndOrderFromOrdering[PreReleaseSection]

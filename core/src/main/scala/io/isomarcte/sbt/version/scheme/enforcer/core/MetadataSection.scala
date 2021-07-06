@@ -21,14 +21,14 @@ import io.isomarcte.sbt.version.scheme.enforcer.core.SafeEquals._
   * res0: Option[io.isomarcte.sbt.version.scheme.enforcer.core.MetadataSection] = Some(MetadataSection(+2021-07-04.d989857))
   *
   * scala> MetadataSection.unsafeFromString("+2021-07-04.d989857").value
-  * res1: Vector[io.isomarcte.sbt.version.scheme.enforcer.core.MetadataComponent] = Vector(MetadataComponent(value = 2021-07-04), MetadataComponent(value = d989857))
+  * res1: Vector[io.isomarcte.sbt.version.scheme.enforcer.core.MetadataVersionToken] = Vector(MetadataVersionToken(value = 2021-07-04), MetadataVersionToken(value = d989857))
   * }}}
   *
   * @note A [[MetadataSection]] may have no components. This can occur when
   *       parsing the string "+". "" is not valid.
   */
 sealed abstract class MetadataSection extends Product with Serializable {
-  def value: Vector[MetadataComponent]
+  def value: Vector[MetadataVersionToken]
 
   // final //
 
@@ -46,7 +46,7 @@ sealed abstract class MetadataSection extends Product with Serializable {
 }
 
 object MetadataSection {
-  private[this] final case class MetadataSectionImpl(override val value: Vector[MetadataComponent]) extends MetadataSection
+  private[this] final case class MetadataSectionImpl(override val value: Vector[MetadataVersionToken]) extends MetadataSection
 
   /** The empty [[MetadataSection]].
     *
@@ -55,7 +55,7 @@ object MetadataSection {
   val empty: MetadataSection = MetadataSectionImpl(Vector.empty)
 
   /** Create a new [[MetadataSection]] from components. */
-  def apply(value: Vector[MetadataComponent]): MetadataSection =
+  def apply(value: Vector[MetadataVersionToken]): MetadataSection =
     MetadataSectionImpl(value)
 
   /** Attempt to create a [[MetadataSection]] from a [[java.lang.String]].
@@ -67,10 +67,10 @@ object MetadataSection {
       // Valid, but empty, metadata
       Right(empty)
     } else if (value.startsWith("+")) {
-      value.drop(1).split('.').foldLeft(Right(Vector.empty): Either[String, Vector[MetadataComponent]]){
+      value.drop(1).split('.').foldLeft(Right(Vector.empty): Either[String, Vector[MetadataVersionToken]]){
         case (acc, value) =>
           acc.flatMap(acc =>
-            MetadataComponent.fromString(value).map(value =>
+            MetadataVersionToken.fromString(value).map(value =>
               acc ++ Vector(value)
             )
           )

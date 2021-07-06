@@ -3,7 +3,7 @@ package io.isomarcte.sbt.version.scheme.enforcer.core
 import io.isomarcte.sbt.version.scheme.enforcer.core.SafeEquals._
 
 sealed abstract class PreReleaseSection extends Product with Serializable {
-  def value: Vector[PreReleaseComponent]
+  def value: Vector[PreReleaseVersionToken]
 
   // final //
 
@@ -15,11 +15,11 @@ sealed abstract class PreReleaseSection extends Product with Serializable {
 }
 
 object PreReleaseSection {
-  private[this] final case class PreReleaseSectionImpl(override val value: Vector[PreReleaseComponent]) extends PreReleaseSection
+  private[this] final case class PreReleaseSectionImpl(override val value: Vector[PreReleaseVersionToken]) extends PreReleaseSection
 
   val empty: PreReleaseSection = PreReleaseSectionImpl(Vector.empty)
 
-  def apply(value: Vector[PreReleaseComponent]): PreReleaseSection =
+  def apply(value: Vector[PreReleaseVersionToken]): PreReleaseSection =
     PreReleaseSectionImpl(value)
 
   def fromString(value: String): Either[String, PreReleaseSection] =
@@ -27,10 +27,10 @@ object PreReleaseSection {
       // Valid, but empty, pre-release
       Right(empty)
     } else if (value.startsWith("-")) {
-      value.drop(1).split('.').foldLeft(Right(Vector.empty[PreReleaseComponent]): Either[String, Vector[PreReleaseComponent]]){
+      value.drop(1).split('.').foldLeft(Right(Vector.empty[PreReleaseVersionToken]): Either[String, Vector[PreReleaseVersionToken]]){
         case (acc, value) =>
           acc.flatMap(acc =>
-            PreReleaseComponent.fromString(value).map(value =>
+            PreReleaseVersionToken.fromString(value).map(value =>
               acc ++ Vector(value)
             )
           )
@@ -51,7 +51,7 @@ object PreReleaseSection {
           case (0, pair) =>
             pair match {
               case (Some(a), Some(b)) =>
-                Ordering[PreReleaseComponent].compare(a, b)
+                Ordering[PreReleaseVersionToken].compare(a, b)
               case (Some(_), None) =>
                 1
               case (None, Some(_)) =>
