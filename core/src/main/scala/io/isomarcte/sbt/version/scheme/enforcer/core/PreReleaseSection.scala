@@ -44,6 +44,7 @@ import io.isomarcte.sbt.version.scheme.enforcer.core.SafeEquals._
   * }}}
   */
 sealed abstract class PreReleaseSection extends Product with Serializable {
+
   def value: Vector[PreReleaseVersionToken]
 
   // final //
@@ -65,6 +66,12 @@ object PreReleaseSection {
 
   private[this] final case class PreReleaseSectionImpl(override val value: Vector[PreReleaseVersionToken]) extends PreReleaseSection
 
+  private[this] val errorBaseMessage: String =
+    "Invalid pre-release section. A pre-release section of a version string begins with a - character and is followed by a series of non-empty dot (.) separated, strings containing only the characters [0-9A-Za-z-] (alphanumeric characters and -). Components may not contain leading zeros."
+
+  private[this] def errorMessage(message: String, input: String): String =
+    s"${errorBaseMessage} ${message}: ${input}"
+
   /** Create a new [[PreReleaseSection]] from components. */
   def apply(value: Vector[PreReleaseVersionToken]): PreReleaseSection =
     PreReleaseSectionImpl(value)
@@ -85,9 +92,12 @@ object PreReleaseSection {
               acc ++ Vector(value)
             )
           )
-      }.map(apply)
+      }.fold(
+        e => Left(errorMessage(s"Error parsing section. $e", value)),
+        value => Right(apply(value))
+      )
     } else {
-      Left(s"Invalid pre-release section. The pre-release section must begin with a - character: ${value}")
+      Left(errorMessage("Missing leading - character.", value))
     }
 
   /** As [[#fromString]], but throws an exception if the value is invalid.
@@ -100,7 +110,7 @@ object PreReleaseSection {
 
   /** The empty [[PreReleaseSection]].
     *
-    * This is equivalent to calling [[#fromString]] with "-".
+    * This is the same as the result of parsing "-".
     */
   val empty: PreReleaseSection = apply(Vector.empty)
 

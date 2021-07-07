@@ -30,6 +30,7 @@ import io.isomarcte.sbt.version.scheme.enforcer.core.SafeEquals._
   *       parsing the string "+". "" is not valid.
   */
 sealed abstract class MetadataSection extends Product with Serializable {
+
   def value: Vector[MetadataVersionToken]
 
   // final //
@@ -49,6 +50,12 @@ sealed abstract class MetadataSection extends Product with Serializable {
 
 object MetadataSection {
   private[this] final case class MetadataSectionImpl(override val value: Vector[MetadataVersionToken]) extends MetadataSection
+
+  private[this] val errorBaseMessage: String =
+    "Invalid metadata section. A metadata section of a version string begins with a + character and is followed by a series of non-empty, dot (.) separated, strings containing only the characters [0-9A-Za-z-] (alphanumeric characters and -)."
+
+  private[this] def errorMessage(message: String, input: String): String =
+    s"${errorBaseMessage} ${message}: ${input}"
 
   /** Create a new [[MetadataSection]] from components. */
   def apply(value: Vector[MetadataVersionToken]): MetadataSection =
@@ -70,9 +77,12 @@ object MetadataSection {
               acc ++ Vector(value)
             )
           )
-      }.map(apply)
+      }.fold(
+        e => Left(errorMessage(s"Error parsing section. $e", value)),
+        value => Right(apply(value))
+      )
     } else {
-      Left(s"Invalid metadata section. The metadata section must begin with a + character: ${value}")
+      Left(errorMessage("Missing leading + character.", value))
     }
 
   /** As [[#fromString]], but throws an exception if the value is invalid.
@@ -88,7 +98,7 @@ object MetadataSection {
 
   /** The empty [[MetadataSection]].
     *
-    * This is equivalent to calling [[#fromString]] with "+".
+    * This is same as the result of parsing "+".
     */
   val empty: MetadataSection = MetadataSectionImpl(Vector.empty)
 

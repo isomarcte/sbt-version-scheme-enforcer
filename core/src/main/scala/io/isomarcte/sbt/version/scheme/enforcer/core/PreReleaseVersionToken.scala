@@ -50,7 +50,7 @@ sealed abstract class PreReleaseVersionToken extends Product with Serializable {
 
 object PreReleaseVersionToken {
   /** A [[Regex]] which matches any [[java.lang.String]] of only digits.
-    */
+1    */
   private[this] val numericRegex: Regex = """\d+""".r
 
   /** A regular expression for matching non-numeric pre-release values according
