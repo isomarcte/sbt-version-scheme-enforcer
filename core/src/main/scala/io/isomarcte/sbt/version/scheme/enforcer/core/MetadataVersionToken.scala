@@ -9,7 +9,7 @@ import scala.util.matching.Regex
   * separated values.
   *
   * A metadata component is structurally any string which matches
-  * `[[0-9A-Za-z-]]+`. Individual components may not be empty.
+  * `[0-9A-Za-z-]+`. Individual components may not be empty.
   *
   * For example,
   *

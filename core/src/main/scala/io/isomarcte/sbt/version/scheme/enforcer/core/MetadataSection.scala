@@ -4,9 +4,11 @@ import io.isomarcte.sbt.version.scheme.enforcer.core.SafeEquals._
 
 /** A data type which models the metadata section of a version string.
   *
-  * The metadata section of a version string always begins with a '+'
-  * character and then continues as long as each character matches
-  * [0-9A-Za-z-.].
+  * The metadata section is made up of metadata components, represented by
+  * instances of [[MetadataVersionToken]]. A metadata section of a version
+  * string always begins with a '+' character and then continues as long as
+  * each character matches [0-9A-Za-z-.]. Each component is '.' separated and
+  * the leading '+' is not part of any component.
   *
   * It has no formal meaning, but is typically used to denote things like
   * build date or the commit hash.
@@ -48,12 +50,6 @@ sealed abstract class MetadataSection extends Product with Serializable {
 object MetadataSection {
   private[this] final case class MetadataSectionImpl(override val value: Vector[MetadataVersionToken]) extends MetadataSection
 
-  /** The empty [[MetadataSection]].
-    *
-    * This is equivalent to calling [[#fromString]] with "+".
-    */
-  val empty: MetadataSection = MetadataSectionImpl(Vector.empty)
-
   /** Create a new [[MetadataSection]] from components. */
   def apply(value: Vector[MetadataVersionToken]): MetadataSection =
     MetadataSectionImpl(value)
@@ -67,7 +63,7 @@ object MetadataSection {
       // Valid, but empty, metadata
       Right(empty)
     } else if (value.startsWith("+")) {
-      value.drop(1).split('.').foldLeft(Right(Vector.empty): Either[String, Vector[MetadataVersionToken]]){
+      value.drop(1).split(internal.separatorRegexString).foldLeft(Right(Vector.empty): Either[String, Vector[MetadataVersionToken]]){
         case (acc, value) =>
           acc.flatMap(acc =>
             MetadataVersionToken.fromString(value).map(value =>
@@ -89,6 +85,12 @@ object MetadataSection {
       e => throw new IllegalArgumentException(e),
       identity
     )
+
+  /** The empty [[MetadataSection]].
+    *
+    * This is equivalent to calling [[#fromString]] with "+".
+    */
+  val empty: MetadataSection = MetadataSectionImpl(Vector.empty)
 
   implicit val orderingInstance: Ordering[MetadataSection] =
     Ordering.by(_.canonicalString)
