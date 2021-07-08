@@ -42,9 +42,9 @@ object GAVs {
   lazy val coursierVersionsV: String = "0.3.1"
   lazy val disciplineMunitV: String  = "1.0.9"
   lazy val kindProjectorV: String    = "0.13.0"
-  lazy val munitV: String            = "0.7.26"
+  lazy val munitV: String            = "0.7.27"
   lazy val organizeImportsV          = "0.4.4"
-  lazy val sbtLibraryManagementCoreV = "1.5.1"
+  lazy val sbtLibraryManagementCoreV = "1.5.2"
   lazy val sbtMimaPluginV: String    = "0.9.2"
   lazy val scalacheckV: String       = "1.15.4"
 }
