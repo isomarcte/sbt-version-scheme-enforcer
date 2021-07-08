@@ -1,6 +1,6 @@
 package io.isomarcte.sbt.version.scheme.enforcer.core
 
-import coursier.version._
+import coursier.version.{Version => CVersion}
 
 /** A representation of a version with only numeric components.
   *
@@ -17,7 +17,7 @@ sealed trait NumericVersion {
 
   final lazy val asVector: Vector[BigInt] = Vector(head) ++ tail
 
-  final lazy val asVersion: Version = Version(versionString)
+  final lazy val asVersion: CVersion = CVersion(versionString)
 
   final def _1: BigInt = head
 
@@ -99,7 +99,7 @@ object NumericVersion {
     * If the given [[java.lang.String]] begins with a "v", it will be dropped.
     */
   def fromString(value: String): Either[String, NumericVersion] =
-    fromCoursierVersion(Version(normalizeVersionString(value)))
+    fromCoursierVersion(CVersion(normalizeVersionString(value)))
 
   /** As [[#fromString]], but the left projection is a [[java.lang.Throwable]],
     * rather than an error [[java.lang.String]].
@@ -118,19 +118,19 @@ object NumericVersion {
     * The [[coursier.version.Version]] may have a tag at the end,
     * e.g. "1.0.0-SNAPSHOT", which will be removed.
     */
-  def fromCoursierVersion(value: Version): Either[String, NumericVersion] = {
+  def fromCoursierVersion(value: CVersion): Either[String, NumericVersion] = {
     value
       .items
       .takeWhile {
-        case _: Version.Number | _: Version.BigNumber =>
+        case _: CVersion.Number | _: CVersion.BigNumber =>
           true
         case _ =>
           false
       }
       .foldLeft(Right(Vector.empty[BigInt]): Either[String, Vector[BigInt]]) {
-        case (acc, value: Version.Number) =>
+        case (acc, value: CVersion.Number) =>
           acc.map(_ ++ Vector(BigInt(value.value)))
-        case (acc, value: Version.BigNumber) =>
+        case (acc, value: CVersion.BigNumber) =>
           acc.map(_ ++ Vector(value.value))
         case (acc, otherwise) =>
           acc.flatMap(
@@ -142,10 +142,10 @@ object NumericVersion {
           )
       }
       .flatMap { (numeric: Vector[BigInt]) =>
-        val rest: Vector[Version.Item] = value
+        val rest: Vector[CVersion.Item] = value
           .items
           .dropWhile {
-            case _: Version.Number | _: Version.BigNumber =>
+            case _: CVersion.Number | _: CVersion.BigNumber =>
               true
             case _ =>
               false
@@ -154,6 +154,6 @@ object NumericVersion {
       }
   }
 
-  def unsafeFromCoursierVersion(value: Version): NumericVersion =
+  def unsafeFromCoursierVersion(value: CVersion): NumericVersion =
     fromCoursierVersion(value).fold(e => throw new IllegalArgumentException(e), identity)
 }

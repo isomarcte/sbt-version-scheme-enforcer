@@ -1,6 +1,7 @@
 package io.isomarcte.sbt.version.scheme.enforcer.core
 
 import coursier.version._
+import coursier.version.{Version => CVersion}
 import io.isomarcte.sbt.version.scheme.enforcer.core.SafeEquals._
 
 /** Algebraic Data Type (ADT) for describing a version change with respect to
@@ -122,7 +123,7 @@ object VersionChangeType {
     */
   def fromPreviousAndNextVersion(
     versionCompatibility: VersionCompatibility
-  )(previousVersion: Version, nextVersion: Version): Either[String, VersionChangeType] =
+  )(previousVersion: CVersion, nextVersion: CVersion): Either[String, VersionChangeType] =
     for {
       p      <- NumericVersion.fromCoursierVersion(previousVersion)
       n      <- NumericVersion.fromCoursierVersion(nextVersion)
@@ -229,4 +230,8 @@ object VersionChangeType {
         ): Either[String, VersionChangeType]
     }
   }
+
+  // Typeclass Instances //
+
+  implicit val orderingInstance: Ordering[VersionChangeType] = Ordering.by(_.toString)
 }

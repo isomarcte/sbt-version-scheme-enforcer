@@ -1,13 +1,13 @@
 package io.isomarcte.sbt.version.scheme.enforcer.core
 
-import coursier.version._
+import coursier.version.{Version => CVersion}
 import munit._
 
 final class NumericVersionTest extends FunSuite {
 
   test("Correctly removes tags") {
     assertEquals(
-      NumericVersion.fromCoursierVersion(Version("1.0.0-SNAPSHOT")),
+      NumericVersion.fromCoursierVersion(CVersion("1.0.0-SNAPSHOT")),
       Right(NumericVersion.unsafeFromVectorIsTag(Vector(BigInt(1), BigInt(0), BigInt(0)), true))
     )
   }
