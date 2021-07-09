@@ -20,7 +20,7 @@ final class SemVerVersionTests extends FunSuite {
   }
 
   test("Precedence") {
-    val ordering: Ordering[SemVerVersion] = SemVerVersion.semverPrecedenceOrdering
+    val ordering: Ordering[SemVerVersion] = SemVerVersion.semVerPrecedenceOrdering
     import ordering.mkOrderingOps
 
     assert(SemVerVersion.unsafeFromString("1.0.0-SNAPSHOT") < SemVerVersion.unsafeFromString("1.0.0"))
