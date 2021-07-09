@@ -101,7 +101,7 @@ sealed abstract class SemVerVersion extends Product with Serializable {
   final def asVersionSections: VersionSections =
     semVerPrecedenceVersion.asVersionSections.withMetadataSection(metadataSection)
 
-  final override def toString: String = s"SemVerPrecedenceVersion(${canonicalString})"
+  final override def toString: String = s"SemVerVersion(${canonicalString})"
 }
 
 object SemVerVersion {
