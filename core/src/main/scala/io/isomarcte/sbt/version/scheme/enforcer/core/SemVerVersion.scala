@@ -17,7 +17,7 @@ package io.isomarcte.sbt.version.scheme.enforcer.core
   *       SemVer logical API precedence, then you can either use the
   *       [[SemVerVersion#semVerPrecedenceVersion]] component of this type which does
   *       not include the metadata ''or'' use the non-implicit ordering
-  *       [[SemVerVersion#semverPrecedenceOrdering]].
+  *       [[SemVerVersion#semVerPrecedenceOrdering]].
   *
   * @see [[https://semver.org/ SemVer]]
   */
@@ -201,5 +201,5 @@ object SemVerVersion {
     *       and thus when `_.compare(a, b) == 0`, that does ''not'' mean that
     *       `a == b` or `a.hashCode == b.hashCode`.
     */
-  val semverPrecedenceOrdering: Ordering[SemVerVersion] = Ordering.by(_.semVerPrecedenceVersion)
+  val semVerPrecedenceOrdering: Ordering[SemVerVersion] = Ordering.by(_.semVerPrecedenceVersion)
 }
