@@ -120,6 +120,37 @@ private[enforcer] trait OrphanInstances {
 
   implicit final val catsInstancesForVersionSections: Hash[VersionSections] with Order[VersionSections] =
     catsHashAndOrderFromOrdering[VersionSections]
+
+  implicit final val arbSemVerPrecedenceVersion: Arbitrary[SemVerPrecedenceVersion] = Arbitrary(
+    for {
+      major             <- Arbitrary.arbitrary[NumericVersionToken]
+      minor             <- Arbitrary.arbitrary[NumericVersionToken]
+      patch             <- Arbitrary.arbitrary[NumericVersionToken]
+      preReleaseSection <- Arbitrary.arbitrary[Option[PreReleaseSection]]
+    } yield SemVerPrecedenceVersion(major, minor, patch, preReleaseSection)
+  )
+
+  implicit final val cogenSemVerPrecedenceVersion: Cogen[SemVerPrecedenceVersion] =
+    Cogen[(NumericVersionToken, NumericVersionToken, NumericVersionToken, Option[PreReleaseSection])]
+      .contramap(value => (value.majorToken, value.minorToken, value.patchToken, value.preReleaseSection))
+
+  implicit final val catsInstancesForSemVerPrecedenceVersion
+    : Hash[SemVerPrecedenceVersion] with Order[SemVerPrecedenceVersion] =
+    catsHashAndOrderFromOrdering[SemVerPrecedenceVersion]
+
+  implicit final val arbSemVerVersion: Arbitrary[SemVerVersion] = Arbitrary(
+    for {
+      semVerPrecedenceVersion <- Arbitrary.arbitrary[SemVerPrecedenceVersion]
+      metadataSection         <- Arbitrary.arbitrary[Option[MetadataSection]]
+    } yield SemVerVersion(semVerPrecedenceVersion, metadataSection)
+  )
+
+  implicit final val cogenSemVerVersion: Cogen[SemVerVersion] =
+    Cogen[(SemVerPrecedenceVersion, Option[MetadataSection])]
+      .contramap(value => (value.semVerPrecedenceVersion, value.metadataSection))
+
+  implicit final val catsInstancesForSemVerVersion: Hash[SemVerVersion] with Order[SemVerVersion] =
+    catsHashAndOrderFromOrdering[SemVerVersion]
 }
 
 object OrphanInstances extends OrphanInstances

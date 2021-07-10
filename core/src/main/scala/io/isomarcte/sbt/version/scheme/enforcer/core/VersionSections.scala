@@ -134,6 +134,15 @@ sealed abstract class VersionSections extends Product with Serializable {
 
   // final //
 
+  final def withNumericSection(value: NumericSection): VersionSections =
+    VersionSections(value, preReleaseSection, metadataSection)
+
+  final def withPreReleaseSection(value: Option[PreReleaseSection]): VersionSections =
+    VersionSections(numericSection, value, metadataSection)
+
+  final def withMetadataSection(value: Option[MetadataSection]): VersionSections =
+    VersionSections(numericSection, preReleaseSection, value)
+
   /** The representation of the version string as derived from the components.
     *
     * If the version string was parsed directly from
