@@ -3,6 +3,7 @@ package io.isomarcte.sbt.version.scheme.enforcer.core
 import coursier.version._
 import coursier.version.{Version => CVersion}
 import io.isomarcte.sbt.version.scheme.enforcer.core.SafeEquals._
+import scala.annotation.nowarn
 
 /** Functions for calculating the minimum next version for a given version scheme.
   *
@@ -21,12 +22,18 @@ object NextVersion {
   private val zero: BigInt = BigInt(0)
   private val one: BigInt  = BigInt(1)
 
+  @nowarn("cat=unused")
+  private val deprecationMessage: String = "Functions for calculating the minimum next version will be removed in a future release. There are a number of issues with attempting to do this, and these functions aren't used by sbt-version-scheme-enforcer-plugin. If you are using these and would like them to stay around in some form please open an issue on github."
+  @nowarn("cat=unused")
+  private val deprecationVersion: String = "2.1.1.0"
+
   /** Calculate the minimum next version from a given
     * [[coursier.version.VersionCompatibility]] describing a version scheme, a
     * [[VersionChangeType]], and a [[coursier.version.Version]].
     *
     * $errors
     */
+  @deprecated(message = deprecationMessage, since = deprecationVersion)
   def minimumNextVersion(
     versionCompatibility: VersionCompatibility
   )(versionChangeType: VersionChangeType, currentVersion: CVersion): Either[String, CVersion] =
@@ -38,6 +45,7 @@ object NextVersion {
   /** As [[#minimumNextVersion]], but takes a [[java.lang.String]] rather than a
     * [[coursier.version.Version]] for convenience.
     */
+  @deprecated(message = deprecationMessage, since = deprecationVersion)
   def minimumNextVersionFromString(
     versionCompatibility: VersionCompatibility
   )(versionChangeType: VersionChangeType, currentVersion: String): Either[String, CVersion] =
@@ -47,6 +55,7 @@ object NextVersion {
     * is sometimes more convenient if the [[coursier.version.Version]] has
     * already been parsed into a [[NumericVersion]].
     */
+  @deprecated(message = deprecationMessage, since = deprecationVersion)
   def minimumNextNumericVersion(
     versionCompatibility: VersionCompatibility
   )(versionChangeType: VersionChangeType, currentVersion: NumericVersion): Either[String, NumericVersion] = {
@@ -71,6 +80,7 @@ object NextVersion {
     *
     * @see [[https://pvp.haskell.org/ Package version Policy]]
     */
+  @deprecated(message = deprecationMessage, since = deprecationVersion)
   def minimumNextPVP(
     versionChangeType: VersionChangeType,
     currentVersion: NumericVersion
@@ -108,6 +118,7 @@ object NextVersion {
     *
     * @see [[https://scala-lang.org/blog/2021/02/16/preventing-version-conflicts-with-versionscheme.html Early SemVer]]
     */
+  @deprecated(message = deprecationMessage, since = deprecationVersion)
   def minimumNextEarlySemVer(
     versionChangeType: VersionChangeType,
     currentVersion: NumericVersion
@@ -146,6 +157,7 @@ object NextVersion {
     *
     * @see [[https://semver.org/ SemVer]]
     */
+  @deprecated(message = deprecationMessage, since = deprecationVersion)
   def minimumNextSemVerSpec(
     versionChangeType: VersionChangeType,
     currentVersion: NumericVersion

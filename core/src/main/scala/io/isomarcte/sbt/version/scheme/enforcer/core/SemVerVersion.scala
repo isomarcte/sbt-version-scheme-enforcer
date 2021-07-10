@@ -193,6 +193,12 @@ object SemVerVersion {
   def unsafeFromString(value: String): SemVerVersion =
     fromString(value).fold(e => throw new IllegalArgumentException(e), identity)
 
+  def fromVersion(value: Version): Either[String, SemVerVersion] =
+    fromString(value.normalizeValue)
+
+  def unsafeFromVersion(value: Version): SemVerVersion =
+    fromVersion(value).fold(e => throw new IllegalArgumentException(e), identity)
+
   implicit val orderingInstance: Ordering[SemVerVersion] = Ordering.by(_.asVersionSections)
 
   /** A special [[Ordering]] instance which will compare ''exactly'' according

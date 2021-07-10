@@ -2,7 +2,6 @@ package io.isomarcte.sbt.version.scheme.enforcer.plugin
 
 import _root_.io.isomarcte.sbt.version.scheme.enforcer.core.SafeEquals._
 import _root_.io.isomarcte.sbt.version.scheme.enforcer.core._
-import coursier.version._
 
 private[plugin] object SbtVersionSchemeEnforcer {
   type ETV = Either[Throwable, VersionChangeType]
@@ -19,18 +18,53 @@ private[plugin] object SbtVersionSchemeEnforcer {
     previousVersion: Option[String],
     nextVersion: String
   ): Either[Throwable, VersionChangeType] =
-    previousVersion
-      .orElse(initialVersion)
-      .fold(Right(Option.empty[NumericVersion]): Either[Throwable, Option[NumericVersion]])(value =>
-        NumericVersion.fromStringT(value).map(value => Option(value))
-      )
-      .flatMap(previousVersion =>
-        NumericVersion
-          .fromStringT(nextVersion)
-          .flatMap(nextVersion =>
-            versionChangeTypeFromSchemeAndPreviousVersionNumeric(scheme, previousVersion, nextVersion)
+    previousVersion.orElse(initialVersion).fold(
+      Left(new IllegalArgumentException("Neither the previous version or the initial version were defined. At least one must be defined.")): Either[Throwable, VersionChangeType]
+    )(previousVersion =>
+      scheme.fold(
+        Left(new IllegalArgumentException("versionScheme is not defined.")): Either[Throwable, VersionChangeType]
+      )(scheme =>
+        VersionScheme.fromCoursierVersionString(scheme).fold(
+          Left(new IllegalArgumentException(s"Unknown versionScheme: ${scheme}")): Either[Throwable, VersionChangeType]
+        )(scheme =>
+          versionChangeTypeFromSchemeAndPreviousVersion(
+            scheme,
+            Version(previousVersion),
+            Version(nextVersion)
+          ).fold(
+            e => Left(new IllegalArgumentException(e)): Either[Throwable, VersionChangeType],
+            value => Right(value)
           )
+        )
       )
+    )
+
+  def versionChangeTypeFromSchemeAndPreviousVersion(
+    scheme: VersionScheme,
+    previousVersion: Version,
+    nextVersion: Version
+  ): Either[String, VersionChangeType] =
+    scheme match {
+      case VersionScheme.PVP =>
+        for {
+          a <- PVPVersion.fromVersion(previousVersion)
+          b <- PVPVersion.fromVersion(nextVersion)
+        } yield VersionChangeTypeClass[PVPVersion].changeType(a, b)
+      case VersionScheme.EarlySemVer =>
+        for {
+          a <- EarlySemVerVersion.fromVersion(previousVersion)
+          b <- EarlySemVerVersion.fromVersion(nextVersion)
+        } yield VersionChangeTypeClass[EarlySemVerVersion].changeType(a, b)
+      case VersionScheme.SemVer =>
+        for {
+          a <- SemVerVersion.fromVersion(previousVersion)
+          b <- SemVerVersion.fromVersion(nextVersion)
+        } yield VersionChangeTypeClass[SemVerVersion].changeType(a, b)
+      case VersionScheme.Always =>
+        Right(VersionChangeTypeClass[AlwaysVersion].changeType(AlwaysVersion(previousVersion.value), AlwaysVersion(nextVersion.value)))
+      case VersionScheme.Strict =>
+        Right(VersionChangeTypeClass[StrictVersion].changeType(StrictVersion(previousVersion.value), StrictVersion(nextVersion.value)))
+    }
 
   /** As [[#versionChangeTypeFromSchemeAndPreviousVersion]], but the input
     * parameters are already in the proper format to perform the operation.

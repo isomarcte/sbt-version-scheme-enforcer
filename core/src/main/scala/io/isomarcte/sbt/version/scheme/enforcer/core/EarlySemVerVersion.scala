@@ -40,6 +40,12 @@ object EarlySemVerVersion {
   def unsafeFromString(value: String): EarlySemVerVersion =
     fromString(value).fold(e => throw new IllegalArgumentException(e), identity)
 
+  def fromVersion(value: Version): Either[String, EarlySemVerVersion] =
+    fromString(value.normalizeValue)
+
+  def unsafeFromVersion(value: Version): EarlySemVerVersion =
+    fromVersion(value).fold(e => throw new IllegalArgumentException(e), identity)
+
   implicit val orderingInstance: Ordering[EarlySemVerVersion] = Ordering.by(_.value)
 
   implicit def versionChangeTypeClassInstance: VersionChangeTypeClass[EarlySemVerVersion] =

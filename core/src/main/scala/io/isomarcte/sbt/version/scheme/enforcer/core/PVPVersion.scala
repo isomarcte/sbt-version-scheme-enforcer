@@ -162,6 +162,12 @@ object PVPVersion {
   def unsafeFromString(value: String): PVPVersion =
     fromString(value).fold(e => throw new IllegalArgumentException(e), identity)
 
+  def fromVersion(value: Version): Either[String, PVPVersion] =
+    fromString(value.normalizeValue)
+
+  def unsafeFromVersion(value: Version): PVPVersion =
+    fromVersion(value).fold(e => throw new IllegalArgumentException(e), identity)
+
   /** This is playing a ''little'' fast and loose with the rules here. In PVP,
     * the ordering ''must'' be the lexicographic ordering of components. The
     * canonical build tool for Haskell, Cabal, is the origin of PVP. Cabal

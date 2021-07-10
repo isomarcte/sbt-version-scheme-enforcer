@@ -1,6 +1,7 @@
 package io.isomarcte.sbt.version.scheme.enforcer.core
 
 import coursier.version.{Version => CVersion}
+import scala.annotation.nowarn
 
 /** A representation of a version with only numeric components.
   *
@@ -8,6 +9,7 @@ import coursier.version.{Version => CVersion}
   *       specifically tuned to the needs of calculating changes between
   *       versions as they pertain to a supported versioning scheme.
   */
+@deprecated(message = "Please use one of the Version scheme data types (SemVerVersion, EarlySemVerVersion, PVPVersion), or VersionSections if your version scheme is not supported.", since = "2.1.1.0")
 sealed trait NumericVersion {
   def head: BigInt
   def tail: Vector[BigInt]
@@ -35,11 +37,21 @@ sealed trait NumericVersion {
 object NumericVersion {
   private[this] val emptyErrorString: String = "Version is empty, which is not a valid numeric version"
 
+  @nowarn("cat=unused")
+  private[this] val deprecationMessage: String =
+    "Please use one of the Version scheme data types (SemVerVersion, EarlySemVerVersion, PVPVersion), or VersionSections if your version scheme is not supported."
+  @nowarn("cat=unused")
+  private[this] val deprecationVersion: String =
+    "2.1.1.0"
+
   final private[this] case class NumericVersionImpl(
-    override val head: BigInt,
-    override val tail: Vector[BigInt],
-    override val hasTag: Boolean
-  ) extends NumericVersion
+    private val headToken: NumericVersionToken,
+    private val tailTokens: Vector[NumericVersionToken],
+    override val hasTag: Boolean,
+  ) extends NumericVersion {
+    override def head: BigInt = headToken.value
+    override def tail: Vector[BigInt] = tailTokens.map(_.value)
+  }
 
   /** Normalize a version [[java.lang.String]] value.
     *
@@ -58,6 +70,7 @@ object NumericVersion {
     * This function is always invoked when creating a [[NumericVersion]] from
     * any of the [[java.lang.String]] based functions.
     */
+  @deprecated(message = "Please use Version.normalizeValue instead.", since = deprecationVersion)
   def normalizeVersionString(value: String): String =
     if (value.startsWith("v")) {
       value.drop(1)
@@ -70,27 +83,35 @@ object NumericVersion {
     * @note This will yield a `Left` value if any of the members are < 0 or if
     *       the [[scala.collections.Vector]] is empty.
     */
+  @deprecated(message = deprecationMessage, since = deprecationVersion)
   def fromVector(value: Vector[BigInt]): Either[String, NumericVersion] = fromVectorIsTag(value, false)
 
   /** As [[#fromVector]] but allows you to specify if this is a tagged version, e.g. a RC.
     */
+  @deprecated(message = deprecationMessage, since = deprecationVersion)
   def fromVectorIsTag(value: Vector[BigInt], isTag: Boolean): Either[String, NumericVersion] =
-    if (value.exists(_ < BigInt(0))) {
-      Left(s"NumericVersion should only have non-negative version components: ${value}"): Either[String, NumericVersion]
-    } else {
-      value
-        .headOption
-        .fold(Left(emptyErrorString): Either[String, NumericVersion])(head =>
-          Right(NumericVersionImpl(head, value.tail, isTag))
+    value.foldLeft(Right(Vector.empty): Either[String, Vector[NumericVersionToken]]){
+      case (acc, value) =>
+        acc.flatMap(acc =>
+          NumericVersionToken.fromBigInt(value).map(value =>
+            acc ++ Vector(value)
+          )
         )
+    }.flatMap{
+      case head +: tail =>
+        Right(NumericVersionImpl(head, tail, isTag))
+      case _ =>
+        Left(emptyErrorString)
     }
 
   /** As [[#fromVector]], but throws on invalid input. Should not be used
     * outside of toy code and the REPL.
     */
+  @deprecated(message = deprecationMessage, since = deprecationVersion)
   def unsafeFromVector(value: Vector[BigInt]): NumericVersion = unsafeFromVectorIsTag(value, false)
 
   /** As [[#unsafeFromVector]], but allows declaring if this version is tagged. */
+  @deprecated(message = deprecationMessage, since = deprecationVersion)
   def unsafeFromVectorIsTag(value: Vector[BigInt], isTag: Boolean): NumericVersion =
     fromVectorIsTag(value, isTag).fold(e => throw new IllegalArgumentException(e), identity)
 
@@ -98,18 +119,21 @@ object NumericVersion {
     *
     * If the given [[java.lang.String]] begins with a "v", it will be dropped.
     */
+  @deprecated(message = deprecationMessage, since = deprecationVersion)
   def fromString(value: String): Either[String, NumericVersion] =
     fromCoursierVersion(CVersion(normalizeVersionString(value)))
 
   /** As [[#fromString]], but the left projection is a [[java.lang.Throwable]],
     * rather than an error [[java.lang.String]].
     */
+  @deprecated(message = deprecationMessage, since = deprecationVersion)
   def fromStringT(value: String): Either[Throwable, NumericVersion] =
     fromString(value).fold(errorString => Left(new IllegalArgumentException(errorString)), value => Right(value))
 
   /** As [[#fromString]], but throws on invalid input. Should not be used
     * outside toy code and the REPL.
     */
+  @deprecated(message = deprecationMessage, since = deprecationVersion)
   def unsafeFromString(value: String): NumericVersion =
     fromString(value).fold(e => throw new IllegalArgumentException(e), identity)
 
@@ -118,42 +142,20 @@ object NumericVersion {
     * The [[coursier.version.Version]] may have a tag at the end,
     * e.g. "1.0.0-SNAPSHOT", which will be removed.
     */
-  def fromCoursierVersion(value: CVersion): Either[String, NumericVersion] = {
-    value
-      .items
-      .takeWhile {
-        case _: CVersion.Number | _: CVersion.BigNumber =>
-          true
+  @deprecated(message = deprecationMessage, since = deprecationVersion)
+  def fromCoursierVersion(value: CVersion): Either[String, NumericVersion] =
+    VersionSections.fromString(
+      value.repr
+    ).flatMap(sections =>
+      sections.numericSection.value match {
+        case head +: tail =>
+          Right(NumericVersionImpl(head, tail, sections.preReleaseSection.isDefined))
         case _ =>
-          false
+          Left(s"No numeric version components found in: ${value}")
       }
-      .foldLeft(Right(Vector.empty[BigInt]): Either[String, Vector[BigInt]]) {
-        case (acc, value: CVersion.Number) =>
-          acc.map(_ ++ Vector(BigInt(value.value)))
-        case (acc, value: CVersion.BigNumber) =>
-          acc.map(_ ++ Vector(value.value))
-        case (acc, otherwise) =>
-          acc.flatMap(
-            Function.const(
-              Left(
-                s"Found non-numeric value ${otherwise} after we've filtered them all out. This is a bug in sbt-version-scheme-enforcer-core, please report it."
-              )
-            )
-          )
-      }
-      .flatMap { (numeric: Vector[BigInt]) =>
-        val rest: Vector[CVersion.Item] = value
-          .items
-          .dropWhile {
-            case _: CVersion.Number | _: CVersion.BigNumber =>
-              true
-            case _ =>
-              false
-          }
-        fromVectorIsTag(numeric, rest.headOption.isDefined)
-      }
-  }
+    )
 
+  @deprecated(message = deprecationMessage, since = deprecationVersion)
   def unsafeFromCoursierVersion(value: CVersion): NumericVersion =
     fromCoursierVersion(value).fold(e => throw new IllegalArgumentException(e), identity)
 }
