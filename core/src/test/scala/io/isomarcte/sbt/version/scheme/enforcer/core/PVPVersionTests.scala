@@ -39,37 +39,114 @@ final class PVPVersionTests extends FunSuite {
   test("VersionChangeTypeClass") {
     val instance: VersionChangeTypeClass[PVPVersion] = VersionChangeTypeClass[PVPVersion]
 
-    assertEquals(instance.changeType(PVPVersion.unsafeFromString("0.0.0"), PVPVersion.unsafeFromString("0.0.0")), VersionChangeType.Patch)
-    assertEquals(instance.changeType(PVPVersion.unsafeFromString("0.0.0"), PVPVersion.unsafeFromString("0.0.1")), VersionChangeType.Minor)
-    assertEquals(instance.changeType(PVPVersion.unsafeFromString("0.0.0"), PVPVersion.unsafeFromString("0.1.0")), VersionChangeType.Major)
-    assertEquals(instance.changeType(PVPVersion.unsafeFromString("0.0.0"), PVPVersion.unsafeFromString("1.0.0")), VersionChangeType.Major)
-    assertEquals(instance.changeType(PVPVersion.unsafeFromString("0.1.0"), PVPVersion.unsafeFromString("1.0.0")), VersionChangeType.Major)
+    assertEquals(
+      instance.changeType(PVPVersion.unsafeFromString("0.0.0"), PVPVersion.unsafeFromString("0.0.0")),
+      VersionChangeType.Patch
+    )
+    assertEquals(
+      instance.changeType(PVPVersion.unsafeFromString("0.0.0"), PVPVersion.unsafeFromString("0.0.1")),
+      VersionChangeType.Minor
+    )
+    assertEquals(
+      instance.changeType(PVPVersion.unsafeFromString("0.0.0"), PVPVersion.unsafeFromString("0.1.0")),
+      VersionChangeType.Major
+    )
+    assertEquals(
+      instance.changeType(PVPVersion.unsafeFromString("0.0.0"), PVPVersion.unsafeFromString("1.0.0")),
+      VersionChangeType.Major
+    )
+    assertEquals(
+      instance.changeType(PVPVersion.unsafeFromString("0.1.0"), PVPVersion.unsafeFromString("1.0.0")),
+      VersionChangeType.Major
+    )
 
-    assertEquals(instance.changeType(PVPVersion.unsafeFromString("1.0.0"), PVPVersion.unsafeFromString("1.0.0")), VersionChangeType.Patch)
-    assertEquals(instance.changeType(PVPVersion.unsafeFromString("1.0.0"), PVPVersion.unsafeFromString("1.0.1")), VersionChangeType.Minor)
-    assertEquals(instance.changeType(PVPVersion.unsafeFromString("1.0.0"), PVPVersion.unsafeFromString("1.1.0")), VersionChangeType.Major)
-    assertEquals(instance.changeType(PVPVersion.unsafeFromString("1.0.0"), PVPVersion.unsafeFromString("2.0.0")), VersionChangeType.Major)
-    assertEquals(instance.changeType(PVPVersion.unsafeFromString("1.1.0"), PVPVersion.unsafeFromString("2.0.0")), VersionChangeType.Major)
+    assertEquals(
+      instance.changeType(PVPVersion.unsafeFromString("1.0.0"), PVPVersion.unsafeFromString("1.0.0")),
+      VersionChangeType.Patch
+    )
+    assertEquals(
+      instance.changeType(PVPVersion.unsafeFromString("1.0.0"), PVPVersion.unsafeFromString("1.0.1")),
+      VersionChangeType.Minor
+    )
+    assertEquals(
+      instance.changeType(PVPVersion.unsafeFromString("1.0.0"), PVPVersion.unsafeFromString("1.1.0")),
+      VersionChangeType.Major
+    )
+    assertEquals(
+      instance.changeType(PVPVersion.unsafeFromString("1.0.0"), PVPVersion.unsafeFromString("2.0.0")),
+      VersionChangeType.Major
+    )
+    assertEquals(
+      instance.changeType(PVPVersion.unsafeFromString("1.1.0"), PVPVersion.unsafeFromString("2.0.0")),
+      VersionChangeType.Major
+    )
 
-    assertEquals(instance.changeType(PVPVersion.unsafeFromString("0.0.0"), PVPVersion.unsafeFromString("0.0.0")), VersionChangeType.Patch)
-    assertEquals(instance.changeType(PVPVersion.unsafeFromString("0.0.0"), PVPVersion.unsafeFromString("0.0.1")), VersionChangeType.Minor)
-    assertEquals(instance.changeType(PVPVersion.unsafeFromString("0.0.0"), PVPVersion.unsafeFromString("0.1.0")), VersionChangeType.Major)
-    assertEquals(instance.changeType(PVPVersion.unsafeFromString("0.0.0"), PVPVersion.unsafeFromString("1.0.0")), VersionChangeType.Major)
-    assertEquals(instance.changeType(PVPVersion.unsafeFromString("0.1.0"), PVPVersion.unsafeFromString("1.0.0")), VersionChangeType.Major)
+    assertEquals(
+      instance.changeType(PVPVersion.unsafeFromString("0.0.0"), PVPVersion.unsafeFromString("0.0.0")),
+      VersionChangeType.Patch
+    )
+    assertEquals(
+      instance.changeType(PVPVersion.unsafeFromString("0.0.0"), PVPVersion.unsafeFromString("0.0.1")),
+      VersionChangeType.Minor
+    )
+    assertEquals(
+      instance.changeType(PVPVersion.unsafeFromString("0.0.0"), PVPVersion.unsafeFromString("0.1.0")),
+      VersionChangeType.Major
+    )
+    assertEquals(
+      instance.changeType(PVPVersion.unsafeFromString("0.0.0"), PVPVersion.unsafeFromString("1.0.0")),
+      VersionChangeType.Major
+    )
+    assertEquals(
+      instance.changeType(PVPVersion.unsafeFromString("0.1.0"), PVPVersion.unsafeFromString("1.0.0")),
+      VersionChangeType.Major
+    )
 
-
-    assertEquals(instance.changeType(PVPVersion.unsafeFromString("1.0.0.0"), PVPVersion.unsafeFromString("1.0.1")), VersionChangeType.Minor)
-    assertEquals(instance.changeType(PVPVersion.unsafeFromString("1.0.0.0"), PVPVersion.unsafeFromString("1.0.1.0")), VersionChangeType.Minor)
-    assertEquals(instance.changeType(PVPVersion.unsafeFromString("1.0.0.0"), PVPVersion.unsafeFromString("1.1.0.0")), VersionChangeType.Major)
-    assertEquals(instance.changeType(PVPVersion.unsafeFromString("1.0.0.0"), PVPVersion.unsafeFromString("2.0.0")), VersionChangeType.Major)
-    assertEquals(instance.changeType(PVPVersion.unsafeFromString("1.1.0.0"), PVPVersion.unsafeFromString("2.0.0.0")), VersionChangeType.Major)
-    assertEquals(instance.changeType(PVPVersion.unsafeFromString("1.1.0.0"), PVPVersion.unsafeFromString("1.1.0.0")), VersionChangeType.Patch)
-    assertEquals(instance.changeType(PVPVersion.unsafeFromString("1.1.0.0"), PVPVersion.unsafeFromString("1.1.0.1")), VersionChangeType.Patch)
-    assertEquals(instance.changeType(PVPVersion.unsafeFromString("1.1.0.0"), PVPVersion.unsafeFromString("1.1.0.1")), VersionChangeType.Patch)
+    assertEquals(
+      instance.changeType(PVPVersion.unsafeFromString("1.0.0.0"), PVPVersion.unsafeFromString("1.0.1")),
+      VersionChangeType.Minor
+    )
+    assertEquals(
+      instance.changeType(PVPVersion.unsafeFromString("1.0.0.0"), PVPVersion.unsafeFromString("1.0.1.0")),
+      VersionChangeType.Minor
+    )
+    assertEquals(
+      instance.changeType(PVPVersion.unsafeFromString("1.0.0.0"), PVPVersion.unsafeFromString("1.1.0.0")),
+      VersionChangeType.Major
+    )
+    assertEquals(
+      instance.changeType(PVPVersion.unsafeFromString("1.0.0.0"), PVPVersion.unsafeFromString("2.0.0")),
+      VersionChangeType.Major
+    )
+    assertEquals(
+      instance.changeType(PVPVersion.unsafeFromString("1.1.0.0"), PVPVersion.unsafeFromString("2.0.0.0")),
+      VersionChangeType.Major
+    )
+    assertEquals(
+      instance.changeType(PVPVersion.unsafeFromString("1.1.0.0"), PVPVersion.unsafeFromString("1.1.0.0")),
+      VersionChangeType.Patch
+    )
+    assertEquals(
+      instance.changeType(PVPVersion.unsafeFromString("1.1.0.0"), PVPVersion.unsafeFromString("1.1.0.1")),
+      VersionChangeType.Patch
+    )
+    assertEquals(
+      instance.changeType(PVPVersion.unsafeFromString("1.1.0.0"), PVPVersion.unsafeFromString("1.1.0.1")),
+      VersionChangeType.Patch
+    )
 
     // Unusual edge cases
-    assertEquals(instance.changeType(PVPVersion.unsafeFromString(""), PVPVersion.unsafeFromString("1")), VersionChangeType.Major)
-    assertEquals(instance.changeType(PVPVersion.unsafeFromString("1"), PVPVersion.unsafeFromString("1.0")), VersionChangeType.Major)
-    assertEquals(instance.changeType(PVPVersion.unsafeFromString("1.0"), PVPVersion.unsafeFromString("1.0.0")), VersionChangeType.Minor)
+    assertEquals(
+      instance.changeType(PVPVersion.unsafeFromString(""), PVPVersion.unsafeFromString("1")),
+      VersionChangeType.Major
+    )
+    assertEquals(
+      instance.changeType(PVPVersion.unsafeFromString("1"), PVPVersion.unsafeFromString("1.0")),
+      VersionChangeType.Major
+    )
+    assertEquals(
+      instance.changeType(PVPVersion.unsafeFromString("1.0"), PVPVersion.unsafeFromString("1.0.0")),
+      VersionChangeType.Minor
+    )
   }
 }

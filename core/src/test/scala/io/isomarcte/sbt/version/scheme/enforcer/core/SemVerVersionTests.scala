@@ -40,14 +40,38 @@ final class SemVerVersionTests extends FunSuite {
   test("VersionChangeTypeClass") {
     val instance: VersionChangeTypeClass[SemVerVersion] = VersionChangeTypeClass[SemVerVersion]
 
-    assertEquals(instance.changeType(SemVerVersion.unsafeFromString("0.0.0"), SemVerVersion.unsafeFromString("0.0.0")), VersionChangeType.Patch)
-    assertEquals(instance.changeType(SemVerVersion.unsafeFromString("0.0.0"), SemVerVersion.unsafeFromString("0.0.1")), VersionChangeType.Major)
-    assertEquals(instance.changeType(SemVerVersion.unsafeFromString("0.0.0"), SemVerVersion.unsafeFromString("0.1.0")), VersionChangeType.Major)
-    assertEquals(instance.changeType(SemVerVersion.unsafeFromString("0.0.0"), SemVerVersion.unsafeFromString("1.0.0")), VersionChangeType.Major)
+    assertEquals(
+      instance.changeType(SemVerVersion.unsafeFromString("0.0.0"), SemVerVersion.unsafeFromString("0.0.0")),
+      VersionChangeType.Patch
+    )
+    assertEquals(
+      instance.changeType(SemVerVersion.unsafeFromString("0.0.0"), SemVerVersion.unsafeFromString("0.0.1")),
+      VersionChangeType.Major
+    )
+    assertEquals(
+      instance.changeType(SemVerVersion.unsafeFromString("0.0.0"), SemVerVersion.unsafeFromString("0.1.0")),
+      VersionChangeType.Major
+    )
+    assertEquals(
+      instance.changeType(SemVerVersion.unsafeFromString("0.0.0"), SemVerVersion.unsafeFromString("1.0.0")),
+      VersionChangeType.Major
+    )
 
-    assertEquals(instance.changeType(SemVerVersion.unsafeFromString("1.0.0"), SemVerVersion.unsafeFromString("1.0.0")), VersionChangeType.Patch)
-    assertEquals(instance.changeType(SemVerVersion.unsafeFromString("1.0.0"), SemVerVersion.unsafeFromString("1.0.1")), VersionChangeType.Patch)
-    assertEquals(instance.changeType(SemVerVersion.unsafeFromString("1.0.0"), SemVerVersion.unsafeFromString("1.1.0")), VersionChangeType.Minor)
-    assertEquals(instance.changeType(SemVerVersion.unsafeFromString("1.0.0"), SemVerVersion.unsafeFromString("2.0.0")), VersionChangeType.Major)
+    assertEquals(
+      instance.changeType(SemVerVersion.unsafeFromString("1.0.0"), SemVerVersion.unsafeFromString("1.0.0")),
+      VersionChangeType.Patch
+    )
+    assertEquals(
+      instance.changeType(SemVerVersion.unsafeFromString("1.0.0"), SemVerVersion.unsafeFromString("1.0.1")),
+      VersionChangeType.Patch
+    )
+    assertEquals(
+      instance.changeType(SemVerVersion.unsafeFromString("1.0.0"), SemVerVersion.unsafeFromString("1.1.0")),
+      VersionChangeType.Minor
+    )
+    assertEquals(
+      instance.changeType(SemVerVersion.unsafeFromString("1.0.0"), SemVerVersion.unsafeFromString("2.0.0")),
+      VersionChangeType.Major
+    )
   }
 }

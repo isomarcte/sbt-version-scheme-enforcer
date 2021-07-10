@@ -30,8 +30,7 @@ object EarlySemVerVersion {
   def apply(value: SemVerVersion): EarlySemVerVersion = EarlySemVerVersionImpl(value)
 
   /** Attempt to create a [[SemVerVersion]] from a [[java.lang.String]]. */
-  def fromString(value: String): Either[String, EarlySemVerVersion] =
-    SemVerVersion.fromString(value).map(apply)
+  def fromString(value: String): Either[String, EarlySemVerVersion] = SemVerVersion.fromString(value).map(apply)
 
   /** As [[#fromString]], but throws an exception if the value is invalid.
     *
@@ -54,10 +53,7 @@ object EarlySemVerVersion {
           )
         } else {
           // SemVer Rules
-          VersionChangeTypeClass[SemVerVersion].changeType(
-            x.value,
-            y.value
-          )
+          VersionChangeTypeClass[SemVerVersion].changeType(x.value, y.value)
         }
     }
 }
