@@ -1,5 +1,7 @@
 package io.isomarcte.sbt.version.scheme.enforcer.core
 
+import io.isomarcte.sbt.version.scheme.enforcer.core.SafeEquals._
+
 /** A data type which represents a SemVer version.
   *
   * @note This value is special in one regard. The SemVer specification states
@@ -202,4 +204,26 @@ object SemVerVersion {
     *       `a == b` or `a.hashCode == b.hashCode`.
     */
   val semVerPrecedenceOrdering: Ordering[SemVerVersion] = Ordering.by(_.semVerPrecedenceVersion)
+
+  implicit val versionChangeTypeClassInstance: VersionChangeTypeClass[SemVerVersion] =
+    new VersionChangeTypeClass[SemVerVersion] {
+      override def changeType(x: SemVerVersion, y: SemVerVersion): VersionChangeType =
+        if (x.major === BigInt(0) || y.major === BigInt(0)) {
+          if (x.asVersionSections.numericSection === y.asVersionSections.numericSection) {
+            VersionChangeType.Patch
+          } else {
+            VersionChangeType.Major
+          }
+        } else {
+          if (x.major === y.major) {
+            if (x.minor === y.minor) {
+              VersionChangeType.Patch
+            } else {
+              VersionChangeType.Minor
+            }
+          } else {
+            VersionChangeType.Major
+          }
+        }
+    }
 }

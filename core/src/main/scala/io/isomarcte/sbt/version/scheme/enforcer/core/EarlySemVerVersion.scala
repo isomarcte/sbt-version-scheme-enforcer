@@ -1,5 +1,7 @@
 package io.isomarcte.sbt.version.scheme.enforcer.core
 
+import io.isomarcte.sbt.version.scheme.enforcer.core.SafeEquals._
+
 /** A data type which represents an early-semver version value.
   *
   * This is effectively a newtype on [[SemVerVersion]]. The primary difference
@@ -27,5 +29,31 @@ object EarlySemVerVersion {
   /** Create an [[EarlySemVerVersion]] from a [[SemVerVersion]]. */
   def apply(value: SemVerVersion): EarlySemVerVersion = EarlySemVerVersionImpl(value)
 
+  /** Attempt to create a [[SemVerVersion]] from a [[java.lang.String]]. */
+  def fromString(value: String): Either[String, EarlySemVerVersion] = SemVerVersion.fromString(value).map(apply)
+
+  /** As [[#fromString]], but throws an exception if the value is invalid.
+    *
+    * It is ''strongly'' recommended that this only be used on the REPL and in
+    * tests.
+    */
+  def unsafeFromString(value: String): EarlySemVerVersion =
+    fromString(value).fold(e => throw new IllegalArgumentException(e), identity)
+
   implicit val orderingInstance: Ordering[EarlySemVerVersion] = Ordering.by(_.value)
+
+  implicit def versionChangeTypeClassInstance: VersionChangeTypeClass[EarlySemVerVersion] =
+    new VersionChangeTypeClass[EarlySemVerVersion] {
+      override def changeType(x: EarlySemVerVersion, y: EarlySemVerVersion): VersionChangeType =
+        if (x.value.major === 0 && y.value.major === 0) {
+          // PVP rules
+          VersionChangeTypeClass[PVPVersion].changeType(
+            PVPVersion.fromVersionSections(x.value.asVersionSections),
+            PVPVersion.fromVersionSections(y.value.asVersionSections)
+          )
+        } else {
+          // SemVer Rules
+          VersionChangeTypeClass[SemVerVersion].changeType(x.value, y.value)
+        }
+    }
 }
