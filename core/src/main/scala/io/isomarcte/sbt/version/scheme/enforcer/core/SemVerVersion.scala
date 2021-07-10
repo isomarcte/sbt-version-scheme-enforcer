@@ -97,7 +97,7 @@ sealed abstract class SemVerVersion extends Product with Serializable {
   final def canonicalString: String =
     s"""${semVerPrecedenceVersion.canonicalString}${metadataSection.fold("")(_.canonicalString)}"""
 
-  /** Convert this [[SemVerPrecedenceVersion]] into a [[VersionSections]] value. */
+  /** Convert this [[SemVerVersion]] into a [[VersionSections]] value. */
   final def asVersionSections: VersionSections =
     semVerPrecedenceVersion.asVersionSections.withMetadataSection(metadataSection)
 
