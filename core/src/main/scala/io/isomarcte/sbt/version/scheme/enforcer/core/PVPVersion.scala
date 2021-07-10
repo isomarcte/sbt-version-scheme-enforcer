@@ -171,4 +171,18 @@ object PVPVersion {
     * account in the ordering when they are present.
     */
   implicit val orderingInstance: Ordering[PVPVersion] = Ordering.by(_.asVersionSections)
+
+  implicit def versionChangeTypeClassInstance: VersionChangeTypeClass[PVPVersion] =
+    new VersionChangeTypeClass[PVPVersion] {
+      override def changeType(x: PVPVersion, y: PVPVersion): VersionChangeType =
+        if (x.major === y.major) {
+          if (x.minor === y.minor) {
+            VersionChangeType.Patch
+          } else {
+            VersionChangeType.Minor
+          }
+        } else {
+          VersionChangeType.Major
+        }
+    }
 }
