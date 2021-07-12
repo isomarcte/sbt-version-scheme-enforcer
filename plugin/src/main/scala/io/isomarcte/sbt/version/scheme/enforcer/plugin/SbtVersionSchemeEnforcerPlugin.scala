@@ -28,7 +28,7 @@ object SbtVersionSchemeEnforcerPlugin extends AutoPlugin {
   override def buildSettings: Seq[Def.Setting[_]] =
     Seq(
       versionSchemeEnforcerPreviousVersion := {
-        val filter: Tag => Boolean = determineVCSTagFilter(
+        val filter: Tag[Version] => Boolean = determineVCSTagFilter(
           versionSchemeEnforcerPreviousVCSTagFilter.?.value,
           versionSchemeEnforcerPreviousVCSTagStringFilter.?.value,
           versionSchemeEnforcerPreviousTagFilter.?.value: @nowarn("cat=deprecation")
@@ -51,7 +51,7 @@ object SbtVersionSchemeEnforcerPlugin extends AutoPlugin {
                   .tagVersionsFiltered(filter, versionSchemeEnforcerTagDomain.value)
                   .toOption
                   .flatMap(_.lastOption)
-                  .fold(initialValue)(previousTag => Some(previousTag.value))
+                  .fold(initialValue)(previousTag => Some(previousTag.version.value))
             )
         }
       }
@@ -168,20 +168,20 @@ object SbtVersionSchemeEnforcerPlugin extends AutoPlugin {
 
   // Private
 
-  private[this] def liftStringFilterToTagFilter(f: String => Boolean): Tag => Boolean = (t: Tag) => f(t.value)
+  private[this] def liftStringFilterToTagFilter(f: String => Boolean): Tag[Version] => Boolean = (t: Tag[Version]) => f(t.version.value)
 
   private[this] def determineVCSTagFilterE(
-    vcsTagFilter: Option[Tag => Boolean],
+    vcsTagFilter: Option[Tag[Version] => Boolean],
     vcsTagStringFilter: Option[String => Boolean],
     tagFilter: Option[String => Boolean]
-  ): Either[Throwable, Tag => Boolean] =
+  ): Either[Throwable, Tag[Version] => Boolean] =
     (
       vcsTagFilter.map(value => ("versionSchemeEnforcerPreviousVCSTagFilter", value)).toList ++
         vcsTagStringFilter
           .map(value => ("versionSchemeEnforcerPreviousVCSTagStringFilter", liftStringFilterToTagFilter(value)))
           .toList ++
         tagFilter.map(value => ("versionSchemeEnforcerPreviousTagFilter", liftStringFilterToTagFilter(value))).toList
-    ).foldLeft((SortedSet.empty[String], ((_: Tag) => true))) { case ((filterNames, _), (name, filter)) =>
+    ).foldLeft((SortedSet.empty[String], ((_: Tag[Version]) => true))) { case ((filterNames, _), (name, filter)) =>
       // Add the filter name to the set of names, and replace the
       // filter. We will error if more than one filter is defined, so
       // replacing the current filter is fine.
@@ -192,14 +192,14 @@ object SbtVersionSchemeEnforcerPlugin extends AutoPlugin {
           new RuntimeException(
             s"""At most one of these settings may be defined, but ${definedFilters.mkString(", ")} were all defined."""
           )
-        ): Either[Throwable, Tag => Boolean]
+        ): Either[Throwable, Tag[Version] => Boolean]
       case (_, filter) =>
         Right(filter)
     }
 
   private[this] def determineVCSTagFilter(
-    vcsTagFilter: Option[Tag => Boolean],
+    vcsTagFilter: Option[Tag[Version] => Boolean],
     vcsTagStringFilter: Option[String => Boolean],
     tagFilter: Option[String => Boolean]
-  ): Tag => Boolean = determineVCSTagFilterE(vcsTagFilter, vcsTagStringFilter, tagFilter).fold(e => throw e, identity)
+  ): Tag[Version] => Boolean = determineVCSTagFilterE(vcsTagFilter, vcsTagStringFilter, tagFilter).fold(e => throw e, identity)
 }

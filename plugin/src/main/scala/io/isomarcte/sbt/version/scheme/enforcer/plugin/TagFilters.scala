@@ -1,5 +1,6 @@
 package io.isomarcte.sbt.version.scheme.enforcer.plugin
 
+import io.isomarcte.sbt.version.scheme.enforcer.core._
 import io.isomarcte.sbt.version.scheme.enforcer.core.vcs._
 
 /** Commonly used filters for [[Keys#versionSchemeEnforcerPreviousTagFilter]].
@@ -9,8 +10,8 @@ object TagFilters {
   /** Filter which drops tags which represent a milestone release,
     * e.g. 1.1.0.0-M1.
     */
-  val noMilestoneTagFilter: Tag => Boolean = { (value: Tag) =>
-    if (value.value.matches(""".*-M\d+$""")) {
+  val noMilestoneTagFilter: Tag[Version] => Boolean = { (value: Tag[Version]) =>
+    if (value.version.normalizeValue.matches(""".*-M\d+$""")) {
       false
     } else {
       true
@@ -22,6 +23,6 @@ object TagFilters {
     */
   @deprecated(message = "Please use noMilestoneTagFilter instead.", since = "2.1.1.0")
   lazy val noMilestoneFilter: String => Boolean = { (value: String) =>
-    noMilestoneTagFilter(Tag(value))
+    noMilestoneTagFilter(Tag(Version(value)))
   }
 }

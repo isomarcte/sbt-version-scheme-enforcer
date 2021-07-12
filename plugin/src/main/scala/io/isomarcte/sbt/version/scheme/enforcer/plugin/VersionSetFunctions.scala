@@ -1,6 +1,5 @@
 package io.isomarcte.sbt.version.scheme.enforcer.plugin
 
-import io.isomarcte.sbt.version.scheme.enforcer.core._
 import io.isomarcte.sbt.version.scheme.enforcer.core.project._
 import io.isomarcte.sbt.version.scheme.enforcer.core.vcs._
 import scala.collection.immutable.SortedSet
@@ -8,17 +7,17 @@ import scala.collection.immutable.SortedSet
 object VersionSetFunctions {
   private type VersionSetF[A] = ProjectInfo[A] => SortedSet[Tag[A]] => SortedSet[A]
 
-  def from[A, B](f: A => Either[String, B])(g: VersionSetF[A]): VersionSetF[B] =
-    (projectInfo: ProjectInfo[B]) => (tagSet: SortedSet[Tag[B]]) => {
-      projectInfo.emap(f).fold(
-        Function.const(Function.const(SortedSet.empty[B])),
+  def bimap[A: Ordering, B: Ordering](f: A => Either[String, B], g: B => A)(versionSetF: VersionSetF[B]): VersionSetF[A] =
+    (projectInfo: ProjectInfo[A]) => (tagSet: SortedSet[Tag[A]]) => {
+      projectInfo.emap[B](f).fold(
+        Function.const(SortedSet.empty[A]),
         projectInfo => {
-          val newTagSet: SortedSet[Tag[A]] =
-            tagSet.foldLeft(SortedSet.empty[A]){
+          val newTagSet: SortedSet[Tag[B]] =
+            tagSet.foldLeft(SortedSet.empty[Tag[B]]){
               case (acc, value) =>
-                acc ++ value.emap(f).fold(Function.const(SortedSet.empty[A]), value => SortedSet(value))
+                acc ++ value.emap[B](f).fold(Function.const(SortedSet.empty[Tag[B]]), value => SortedSet(value))
             }
-          g(projectInfo)(newTagSet)
+          versionSetF(projectInfo)(newTagSet).map(g)
         }
       )
     }

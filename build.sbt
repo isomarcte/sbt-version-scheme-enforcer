@@ -158,7 +158,8 @@ lazy val plugin: Project = project
     scriptedLaunchOpts := {
       scriptedLaunchOpts.value ++ Seq("-Dplugin.version=" + version.value)
     },
-    scriptedBufferLog := false
+    scriptedBufferLog := false,
+    scalacOptions += "-Wconf:cat=deprecation:info"
   )
   .enablePlugins(SbtPlugin)
   .disablePlugins(SbtVersionSchemeEnforcerPlugin)
