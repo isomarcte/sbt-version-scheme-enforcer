@@ -1,5 +1,6 @@
 package io.isomarcte.sbt.version.scheme.enforcer.core.vcs
 
+import io.isomarcte.sbt.version.scheme.enforcer.core._
 import java.time.OffsetDateTime
 import java.time.format.DateTimeFormatter
 import scala.util.Try
@@ -11,20 +12,9 @@ import scala.util.Try
   *       uncommon and not normally a good idea, you can have a project with
   *       versions and no VCS, thus no tags.
   */
-sealed abstract class Tag extends Ordered[Tag] {
+sealed abstract class Tag[A] extends Product with Serializable {
 
-  /** The [[java.lang.String]] representation of the canonical identifier of the
-    * tag. The definition of a tag in all VCS systems ''must'' support this
-    * data.
-    *
-    * For example, if we choose our VCS system to be Git, then this value is
-    * what you would use to checkout a tag,
-    *
-    * {{{
-    * $ git checkout v1.0.0.0 # v1.0.0.0 is the tag here.
-    * }}}
-    */
-  def value: String
+  def version: A
 
   /** The [[java.time.OffsetDateTime]] that the tag was created at.
     *
@@ -40,46 +30,41 @@ sealed abstract class Tag extends Ordered[Tag] {
 
   // Final //
 
-  final def withValue(newValue: String): Tag = Tag(newValue, creationDate)
+  final def map[B](f: A => B): Tag[B] =
+    Tag(f(version))
 
-  final def withCreationDate(newCreationDate: Option[OffsetDateTime]): Tag = Tag(value, newCreationDate)
+  final def emap[B](f: A => Either[String, B]): Either[String, Tag[B]] =
+    f(version).map(version => Tag(version, creationDate))
 
-  final override def toString: String = s"Tag(value = ${value}, creationDate = ${creationDate})"
-
-  final override def compare(that: Tag): Int =
-    Ordering[Option[OffsetDateTime]].compare(creationDate, that.creationDate) match {
-      case 0 =>
-        value.compare(that.value)
-      case otherwise =>
-        otherwise
-    }
+  final override def toString: String = s"Tag(version = ${version}, creationDate = ${creationDate})"
 }
 
 object Tag {
 
   // Backing implementation
 
-  final private case class TagImpl(override val value: String, override val creationDate: Option[OffsetDateTime])
-      extends Tag
+  final private case class TagImpl[A](override val version: A, override val creationDate: Option[OffsetDateTime])
+      extends Tag[A]
 
   // Public
 
   /** Create a new [[Tag]] from an arbitrary [[java.lang.String]] representing the
     * canonical name of the [[Tag]].
     */
-  def apply(value: String): Tag = apply(value, None)
+  def apply[A](version: A): Tag[A] =
+    TagImpl(version, None)
 
   /** Create a new [[Tag]] from an arbitrary [[java.lang.String]] representing the
     * canonical name of the [[Tag]] and a [[java.time.OffsetDateTime]]
     * representing the creation time of the [[Tag]].
     */
-  def apply(value: String, creationDate: OffsetDateTime): Tag = apply(value, Some(creationDate))
+  def apply[A](version: A, creationDate: OffsetDateTime): Tag[A] = TagImpl(version, Some(creationDate))
 
   /** Create a new [[Tag]] from an arbitrary [[java.lang.String]] representing the
     * canonical name of the [[Tag]] and an optional [[java.time.OffsetDateTime]]
     * representing the creation time of the [[Tag]].
     */
-  def apply(value: String, creationDate: Option[OffsetDateTime]): Tag = TagImpl(value, creationDate)
+  def apply[A](version: A, creationDate: Option[OffsetDateTime]): Tag[A] = TagImpl(version, creationDate)
 
   /** As [[#fromCreationDateString]], but always uses
     * [[java.time.format.DateTimeFormatter#ISO_OFFSET_DATE_TIME]] as the
@@ -89,8 +74,8 @@ object Tag {
     *
     * @see [[https://datatracker.ietf.org/doc/html/rfc3339 RFC 3339]]
     */
-  def fromCreationDateStringISO8601(value: String, creationDate: String): Either[Throwable, Tag] =
-    fromCreationDateString(value, creationDate, DateTimeFormatter.ISO_OFFSET_DATE_TIME)
+  def fromCreationDateStringISO8601[A](version: A, creationDate: String): Either[Throwable, Tag[A]] =
+    fromCreationDateString(version, creationDate, DateTimeFormatter.ISO_OFFSET_DATE_TIME)
 
   /** Attempt to create a new [[Tag]] from a [[java.lang.String]] representing
     * the canonical name of the [[Tag]] and a [[java.lang.String]] which
@@ -102,6 +87,20 @@ object Tag {
     *       parsing and then call one of the `apply` methods to create the
     *       value.
     */
-  def fromCreationDateString(value: String, creationDate: String, format: DateTimeFormatter): Either[Throwable, Tag] =
-    Try(OffsetDateTime.parse(creationDate, format)).toEither.map(creationDate => apply(value, Some(creationDate)))
+  def fromCreationDateString[A](version: A, creationDate: String, format: DateTimeFormatter): Either[Throwable, Tag[A]] =
+    Try(OffsetDateTime.parse(creationDate, format)).toEither.map(creationDate => apply(version, Some(creationDate)))
+
+  def toPVP(tag: Tag[Version]): Either[String, Tag[PVPVersion]] =
+    tag.emap(PVPVersion.fromVersion)
+
+  implicit def orderingInstance[A: Ordering]: Ordering[Tag[A]] =
+    new Ordering[Tag[A]] {
+      override def compare(x: Tag[A], y: Tag[A]): Int =
+        Ordering[Option[OffsetDateTime]].compare(x.creationDate, y.creationDate) match {
+          case 0 =>
+            Ordering[A].compare(x.version, y.version)
+          case otherwise =>
+            otherwise
+        }
+    }
 }

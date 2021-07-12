@@ -36,7 +36,7 @@ sealed private[plugin] trait VCS extends Product with Serializable {
   /** An implementation dependent function to convert a particular VCS system's
     * textual representation of a tag into a [[Tag]] data type.
     */
-  def tagStringToTag(value: String): Either[String, Tag]
+  def tagStringToTag(value: String): Either[String, Tag[Version]]
 
   // final
 
@@ -44,9 +44,9 @@ sealed private[plugin] trait VCS extends Product with Serializable {
     *
     * @note $outerError
     */
-  final def tagsWithErrors(domain: TagDomain): Either[Throwable, Vector[Either[String, Tag]]] =
+  final def tagsWithErrors(domain: TagDomain): Either[Throwable, Vector[Either[String, Tag[Version]]]] =
     tagStrings(domain).map(
-      _.foldLeft(Vector.empty[Either[String, Tag]]) { case (acc, value) =>
+      _.foldLeft(Vector.empty[Either[String, Tag[Version]]]) { case (acc, value) =>
         acc ++ Vector(tagStringToTag(value))
       }
     )
@@ -55,9 +55,9 @@ sealed private[plugin] trait VCS extends Product with Serializable {
     *
     * @note $outerError
     */
-  final def tags(domain: TagDomain): Either[Throwable, SortedSet[Tag]] =
+  final def tags(domain: TagDomain): Either[Throwable, SortedSet[Tag[Version]]] =
     tagsWithErrors(domain).map(
-      _.foldLeft(SortedSet.empty[Tag]) { case (acc, value) =>
+      _.foldLeft(SortedSet.empty[Tag[Version]]) { case (acc, value) =>
         value.fold(Function.const(acc), value => acc ++ SortedSet(value))
       }
     )
@@ -72,10 +72,10 @@ sealed private[plugin] trait VCS extends Product with Serializable {
     *
     * @note $outerError
     */
-  final def tagVersionsTransform(transform: Tag => Option[Tag], domain: TagDomain): Either[Throwable, SortedSet[Tag]] =
+  final def tagVersionsTransform(transform: Tag[Version] => Option[Tag[Version]], domain: TagDomain): Either[Throwable, SortedSet[Tag[Version]]] =
     tags(domain).map(
       _.flatMap { value =>
-        transform(value).fold(SortedSet.empty[Tag])(value => SortedSet(value))
+        transform(value).fold(SortedSet.empty[Tag[Version]])(value => SortedSet(value))
       }
     )
 
@@ -85,7 +85,7 @@ sealed private[plugin] trait VCS extends Product with Serializable {
     *
     * @note $outerError
     */
-  final def tagVersionsFiltered(tagFilter: Tag => Boolean, domain: TagDomain): Either[Throwable, SortedSet[Tag]] =
+  final def tagVersionsFiltered(tagFilter: Tag[Version] => Boolean, domain: TagDomain): Either[Throwable, SortedSet[Tag[Version]]] =
     tagVersionsTransform(
       value =>
         if (tagFilter(value)) {
@@ -107,12 +107,12 @@ private[plugin] object VCS {
 
     override def tagStrings(domain: TagDomain): Either[Throwable, Vector[String]] = vcs.Git.gitTagStrings(domain)
 
-    override def tagStringToTag(value: String): Either[String, Tag] =
+    override def tagStringToTag(value: String): Either[String, Tag[Version]] =
       value.trim.split(' ').toList match {
         case tagString :: date :: Nil =>
           Tag
-            .fromCreationDateStringISO8601(tagString, date)
-            .fold(e => Left(e.getLocalizedMessage): Either[String, Tag], value => Right(value))
+            .fromCreationDateStringISO8601[Version](Version(tagString), date)
+            .fold(e => Left(e.getLocalizedMessage): Either[String, Tag[Version]], value => Right(value))
         case _ =>
           Left(s"Expected two tag components, '%(refname:strip=2) %(creatordate:iso-strict)', but got ${value}")
       }

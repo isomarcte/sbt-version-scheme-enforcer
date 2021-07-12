@@ -25,4 +25,34 @@ object VersionScheme {
 
   implicit val orderingInstance: Ordering[VersionScheme] =
     Ordering.by(_.toString)
+
+  def changeType(versionScheme: VersionScheme)(x: Version, y: Version): Either[String, VersionChangeType] =
+    versionScheme match {
+      case PVP =>
+        for {
+          x <- PVPVersion.fromVersion(x)
+          y <- PVPVersion.fromVersion(y)
+        } yield VersionChangeTypeClass[PVPVersion].changeType(x, y)
+      case SemVer =>
+        for {
+          x <- SemVerVersion.fromVersion(x)
+          y <- SemVerVersion.fromVersion(y)
+        } yield VersionChangeTypeClass[SemVerVersion].changeType(x, y)
+      case EarlySemVer =>
+        for {
+          x <- EarlySemVerVersion.fromVersion(x)
+          y <- EarlySemVerVersion.fromVersion(y)
+        } yield VersionChangeTypeClass[EarlySemVerVersion].changeType(x, y)
+      case Strict =>
+        Right(VersionChangeTypeClass[StrictVersion].changeType(StrictVersion(x.value), StrictVersion(y.value)))
+      case Always =>
+        Right(VersionChangeTypeClass[AlwaysVersion].changeType(AlwaysVersion(x.value), AlwaysVersion(y.value)))
+    }
+
+  def changeTypeFromStrings(versionScheme: String)(x: String, y: String): Either[String, VersionChangeType] =
+    VersionScheme.fromCoursierVersionString(versionScheme).fold(
+      Left(s"Unknown or invalid versionScheme: ${versionScheme}"): Either[String, VersionChangeType]
+    )(versionScheme =>
+      changeType(versionScheme)(Version(x), Version(y))
+    )
 }

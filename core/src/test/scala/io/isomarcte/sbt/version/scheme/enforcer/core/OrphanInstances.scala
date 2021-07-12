@@ -187,6 +187,14 @@ private[enforcer] trait OrphanInstances {
 
   implicit final val catsInstancesForStrictVersion: Hash[StrictVersion] with Order[StrictVersion] =
     catsHashAndOrderFromOrdering[StrictVersion]
+
+  implicit final val arbVersion: Arbitrary[Version] =
+    Arbitrary(
+      Gen.oneOf(Arbitrary.arbitrary[PVPVersion].map(_.canonicalString), Arbitrary.arbitrary[SemVerVersion].map(_.canonicalString), Arbitrary.arbitrary[EarlySemVerVersion].map(_.canonicalString), Arbitrary.arbitrary[String]).map(Version.apply)
+    )
+
+  implicit final val cogenVersion: Cogen[Version] =
+    Cogen[String].contramap(_.value)
 }
 
 object OrphanInstances extends OrphanInstances

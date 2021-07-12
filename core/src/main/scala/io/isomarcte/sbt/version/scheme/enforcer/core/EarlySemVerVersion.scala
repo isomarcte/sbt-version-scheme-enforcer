@@ -20,6 +20,9 @@ sealed abstract class EarlySemVerVersion extends Product with Serializable {
 
   // final //
 
+  final def canonicalString: String =
+    value.canonicalString
+
   final override def toString: String = s"EarlySemVerVersion(${value.canonicalString})"
 }
 

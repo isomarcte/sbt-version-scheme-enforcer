@@ -41,7 +41,8 @@ private[plugin] object SbtVersionSchemeEnforcer {
 
   def versionChangeTypeFromSchemeAndPreviousVersion(
     scheme: VersionScheme,
-    previousVersion: Version,
+    initialVersion: Option[Version],
+    previousVersion: Option[Version],
     nextVersion: Version
   ): Either[String, VersionChangeType] =
     scheme match {

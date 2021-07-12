@@ -6,24 +6,24 @@ import org.scalacheck._
 
 private[enforcer] trait OrphanTagInstances {
 
-  implicit final lazy val catsInstancesForTag: Hash[Tag] with Order[Tag] = {
-    val order: Order[Tag] = Order.fromComparable[Tag]
-    new Hash[Tag] with Order[Tag] {
-      override def hash(a: Tag): Int = a.hashCode
+  implicit final def catsInstancesForTag[A: Ordering]: Hash[Tag[A]] with Order[Tag[A]] = {
+    val order: Order[Tag[A]] = Order.fromOrdering[Tag[A]]
+    new Hash[Tag[A]] with Order[Tag[A]] {
+      override def hash(a: Tag[A]): Int = a.hashCode
 
-      override def compare(a: Tag, b: Tag): Int = order.compare(a, b)
+      override def compare(a: Tag[A], b: Tag[A]): Int = order.compare(a, b)
     }
   }
 
-  implicit final lazy val arbTag: Arbitrary[Tag] = Arbitrary(
+  implicit final def arbTag[A: Arbitrary]: Arbitrary[Tag[A]] = Arbitrary(
     for {
-      value        <- Arbitrary.arbitrary[String]
+      version        <- Arbitrary.arbitrary[A]
       creationDate <- Arbitrary.arbitrary[Option[OffsetDateTime]]
-    } yield Tag(value, creationDate)
+    } yield Tag(version, creationDate)
   )
 
-  implicit final lazy val cogenTag: Cogen[Tag] = Cogen[(String, Option[OffsetDateTime])]
-    .contramap(value => (value.value, value.creationDate))
+  implicit final def cogenTag[A: Cogen]: Cogen[Tag[A]] = Cogen[(A, Option[OffsetDateTime])]
+    .contramap(value => (value.version, value.creationDate))
 }
 
 private[enforcer] object OrphanTagInstances extends OrphanTagInstances

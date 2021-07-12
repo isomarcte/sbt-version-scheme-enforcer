@@ -24,6 +24,9 @@ object StrictVersion {
 
   def apply(value: String): StrictVersion = StrictVersionImpl(value)
 
+  def fromVersion(value: Version): StrictVersion =
+    apply(value.normalizeValue)
+
   implicit val orderingInstance: Ordering[StrictVersion] = Ordering.by(_.value)
 
   implicit val versionChangeTypeClassInstance: VersionChangeTypeClass[StrictVersion] =

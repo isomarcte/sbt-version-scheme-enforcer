@@ -24,6 +24,9 @@ object AlwaysVersion {
 
   def apply(value: String): AlwaysVersion = AlwaysVersionImpl(value)
 
+  def fromVersion(value: Version): AlwaysVersion =
+    apply(value.normalizeValue)
+
   implicit val orderingInstance: Ordering[AlwaysVersion] = Ordering.by(_.value)
 
   implicit val versionChangeTypeClassInstance: VersionChangeTypeClass[AlwaysVersion] =

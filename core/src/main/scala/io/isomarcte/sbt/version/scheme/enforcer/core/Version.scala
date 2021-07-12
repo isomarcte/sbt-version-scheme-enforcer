@@ -8,7 +8,7 @@ sealed abstract class Version extends Product with Serializable {
   // final //
 
   final def normalizeValue: String =
-    value.trim.dropWhile(_ === 'v')
+    value.trim.dropWhile(_.toLower === 'v')
 
   override final def toString: String =
     s"Version(value = ${value})"

@@ -27,7 +27,7 @@ trait Keys {
   private[this] val vcsTagFilterSharedDescriptionSuffix: String =
     "At most one of these settings may be defined. Defining both will result in an error. If none are set then no filtering will be done on tags, which is equivalent to a filter with the definition `Function.const(true)`"
 
-  final val versionSchemeEnforcerPreviousVCSTagFilter: SettingKey[Tag => Boolean] = settingKey[Tag => Boolean](
+  final val versionSchemeEnforcerPreviousVCSTagFilter: SettingKey[Tag[Version] => Boolean] = settingKey[Tag[Version] => Boolean](
     List(
       vcsTagFilterSharedDescription,
       "This setting operates directly on the Tag data type which gives full access to the Tag metadata. If you only want to inspect the String representation of a Tag, you can use versionSchemeEnforcerPreviousVCSTagStringFilter.",
@@ -47,6 +47,8 @@ trait Keys {
   final val versionSchemeEnforcerTagDomain: SettingKey[TagDomain] = settingKey[TagDomain](
     "The domain of VCS tags to consider when looking for previous releases to use in the binary compatibility check. For example, this can be TagDomain.All to consider all tags on the repository, or TagDomain.Reachable to only consider tags which are reachable (ancestors) of the current commit. The later case can be useful when you have multiple branches which should not be considered directly related for the purposes of binary compatibility. TagDomain.All is the default as of 2.1.1.0. The behavior prior to 2.1.1.0 was equivalent to TagDomain.Reachable."
   )
+
+  // final val versionSchemeEnforcerVersionSetF: SettingKey[ProjectInfo => SortedSet[Tag] => MimaChecks] = settingKey[ProjectInfo => SortedSet[Tag] => MimaChecks]("")
 
   // Deprecated Settings
 

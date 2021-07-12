@@ -3,7 +3,9 @@ package io.isomarcte.sbt.version.scheme.enforcer.core
 import coursier.version._
 import coursier.version.{Version => CVersion}
 import munit._
+import scala.annotation.nowarn
 
+@nowarn("cat=deprecation")
 final class VersionChangeTypeTest extends FunSuite {
 
   test("Detect proper version change for EarlySemVer") {

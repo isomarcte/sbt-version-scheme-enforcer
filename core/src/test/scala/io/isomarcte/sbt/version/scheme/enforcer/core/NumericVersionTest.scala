@@ -2,7 +2,9 @@ package io.isomarcte.sbt.version.scheme.enforcer.core
 
 import coursier.version.{Version => CVersion}
 import munit._
+import scala.annotation.nowarn
 
+@nowarn("cat=deprecation")
 final class NumericVersionTest extends FunSuite {
 
   test("Correctly removes tags") {
