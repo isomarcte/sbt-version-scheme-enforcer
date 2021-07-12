@@ -55,4 +55,25 @@ object VersionScheme {
     )(versionScheme =>
       changeType(versionScheme)(Version(x), Version(y))
     )
+
+  def orderByScheme(versionScheme: VersionScheme)(x: Version, y: Version): Either[String, Int] =
+    versionScheme match {
+      case PVP =>
+        for {
+          x <- PVPVersion.fromVersion(x)
+          y <- PVPVersion.fromVersion(y)
+        } yield Ordering[PVPVersion].compare(x, y)
+      case SemVer =>
+        for {
+          x <- SemVerVersion.fromVersion(x)
+          y <- SemVerVersion.fromVersion(y)
+        } yield Ordering[SemVerVersion].compare(x, y)
+      case EarlySemVer =>
+        for {
+          x <- EarlySemVerVersion.fromVersion(x)
+          y <- EarlySemVerVersion.fromVersion(y)
+        } yield Ordering[EarlySemVerVersion].compare(x, y)
+      case Always =>
+        Ordering[AlwaysVersion].compare(AlwaysVersion.fromVersion(x), AlwaysVersion.fromVersion(y))
+    }
 }

@@ -3,6 +3,7 @@ package io.isomarcte.sbt.version.scheme.enforcer.plugin
 import io.isomarcte.sbt.version.scheme.enforcer.core.project._
 import io.isomarcte.sbt.version.scheme.enforcer.core.vcs._
 import scala.collection.immutable.SortedSet
+import io.isomarcte.sbt.version.scheme.enforcer.core._
 
 object VersionSetFunctions {
   private type VersionSetF[A] = ProjectInfo[A] => SortedSet[Tag[A]] => SortedSet[A]
@@ -21,4 +22,7 @@ object VersionSetFunctions {
         }
       )
     }
+
+  def closestMajorChange(versionScheme: VersionScheme): VersionSetF[String] =
+
 }
