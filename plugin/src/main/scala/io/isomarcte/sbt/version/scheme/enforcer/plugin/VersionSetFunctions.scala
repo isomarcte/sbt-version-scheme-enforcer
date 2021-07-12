@@ -4,6 +4,7 @@ import io.isomarcte.sbt.version.scheme.enforcer.core.project._
 import io.isomarcte.sbt.version.scheme.enforcer.core.vcs._
 import scala.collection.immutable.SortedSet
 import io.isomarcte.sbt.version.scheme.enforcer.core._
+import io.isomarcte.sbt.version.scheme.enforcer.core.SafeEquals._
 
 object VersionSetFunctions {
   private type VersionSetF[A] = ProjectInfo[A] => SortedSet[Tag[A]] => SortedSet[A]
@@ -23,6 +24,24 @@ object VersionSetFunctions {
       )
     }
 
-  def closestMajorChange(versionScheme: VersionScheme): VersionSetF[String] =
-
+  def closestByChange(versionScheme: VersionScheme, targetChangeType: VersionChangeType): VersionSetF[String] =
+    (projectInfo: ProjectInfo[Version]) => (tagSet: SortedSet[Tag[Version]]) => {
+      tagSet.foldLeft(Option.empty[Version]){
+        case (acc, value) =>
+          VersionScheme.changeType(versionScheme)(value.version, projectInfo.currentVersion).flatMap(changeType =>
+            if (targetChangeType === changeType) {
+              acc.fold(
+                value.version
+              )(acc =>
+                VersionScheme.orderByScheme(versionScheme)(acc, value.version).map{
+                  case result if result <= 0 =>
+                    value.version
+                  case _ =>
+                    acc
+                }
+              )
+            }
+          }
+      }
+    }
 }

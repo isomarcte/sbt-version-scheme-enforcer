@@ -74,6 +74,8 @@ object VersionScheme {
           y <- EarlySemVerVersion.fromVersion(y)
         } yield Ordering[EarlySemVerVersion].compare(x, y)
       case Always =>
-        Ordering[AlwaysVersion].compare(AlwaysVersion.fromVersion(x), AlwaysVersion.fromVersion(y))
+        Right(Ordering[AlwaysVersion].compare(AlwaysVersion.fromVersion(x), AlwaysVersion.fromVersion(y)))
+      case Strict =>
+        Right(Ordering[StrictVersion].compare(StrictVersion.fromVersion(x), StrictVersion.fromVersion(y)))
     }
 }
