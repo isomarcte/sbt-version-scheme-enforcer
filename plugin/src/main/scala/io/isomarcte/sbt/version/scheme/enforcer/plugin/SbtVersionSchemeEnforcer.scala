@@ -68,6 +68,12 @@ private[plugin] object SbtVersionSchemeEnforcer {
       )(value => Right(value))
     )
 
+  /** Drop the leading 'v' and take characters as long as they are part of the
+    * numeric section of the version string.
+    */
+  def normalizeVersionString(value: String): String =
+    value.dropWhile(_.toLower === 'v').takeWhile(char => char.isDigit || char === '.')
+
   /** Checks if we should run mima by inspecting the initial version value on
     * which to enforce the given `versionScheme` and the current version.
     *
@@ -82,10 +88,7 @@ private[plugin] object SbtVersionSchemeEnforcer {
           SchemedVersion
             .fromVersionStringAndScheme(initialVersion, scheme)
             // Need to remove any tag, e.g. -SNAPSHOT or the comparison will be wonky.
-            .compareTo(
-              SchemedVersion
-                .fromVersionStringAndScheme(currentVersion.takeWhile(char => char.isDigit || char === '.'), scheme)
-            ) < 0
+            .compareTo(SchemedVersion.fromVersionStringAndScheme(normalizeVersionString(currentVersion), scheme)) < 0
         )
       )
 }
