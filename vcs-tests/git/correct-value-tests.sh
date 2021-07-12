@@ -81,6 +81,12 @@ check_result 'None'
 # Set versionSchemeEnforcerInitialVersion, this should be inferred as
 # the fallback fro versionSchemeEnforcerPreviousVersion
 
+# sbt-dynver test
+
+echo 'ThisBuild / versionSchemeEnforcerInitialVersion := Some("1.0.0+0-1234abcd+20140707-1030")' >> initial.sbt
+
+check_result 'Some(1.0.0)'
+
 echo 'ThisBuild / versionSchemeEnforcerInitialVersion := Some("1.0.0.0")' >> initial.sbt
 
 check_result 'Some(1.0.0.0)'

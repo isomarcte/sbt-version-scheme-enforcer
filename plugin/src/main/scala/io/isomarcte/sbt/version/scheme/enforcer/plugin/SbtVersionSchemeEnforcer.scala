@@ -82,7 +82,10 @@ private[plugin] object SbtVersionSchemeEnforcer {
           SchemedVersion
             .fromVersionStringAndScheme(initialVersion, scheme)
             // Need to remove any tag, e.g. -SNAPSHOT or the comparison will be wonky.
-            .compareTo(SchemedVersion.fromVersionStringAndScheme(currentVersion.takeWhile(_ =!= '-'), scheme)) < 0
+            .compareTo(
+              SchemedVersion
+                .fromVersionStringAndScheme(currentVersion.takeWhile(char => char.isDigit || char === '.'), scheme)
+            ) < 0
         )
       )
 }
