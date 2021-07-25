@@ -31,7 +31,7 @@ sealed abstract class Tag[A] extends Product with Serializable {
   // Final //
 
   final def map[B](f: A => B): Tag[B] =
-    Tag(f(version))
+    Tag(f(version), creationDate)
 
   final def emap[B](f: A => Either[String, B]): Either[String, Tag[B]] =
     f(version).map(version => Tag(version, creationDate))
@@ -96,6 +96,17 @@ object Tag {
   implicit def orderingInstance[A: Ordering]: Ordering[Tag[A]] =
     new Ordering[Tag[A]] {
       override def compare(x: Tag[A], y: Tag[A]): Int =
+        Ordering[A].compare(x.version, y.version) match {
+          case 0 =>
+            Ordering[Option[OffsetDateTime]].compare(x.creationDate, y.creationDate)
+          case otherwise =>
+            otherwise
+        }
+    }
+
+  def creationDateOrderingInstance[A: Ordering]: Ordering[Tag[A]] =
+    new Ordering[Tag[A]] {
+      override def compare(x: Tag[A], y: Tag[A]): Int =
         Ordering[Option[OffsetDateTime]].compare(x.creationDate, y.creationDate) match {
           case 0 =>
             Ordering[A].compare(x.version, y.version)
@@ -103,4 +114,7 @@ object Tag {
             otherwise
         }
     }
+
+  implicit def versionChangeTypeClassInstance[A](implicit A: VersionChangeTypeClass[A]): VersionChangeTypeClass[Tag[A]] =
+    A.contramap(_.version)
 }

@@ -78,4 +78,17 @@ object VersionScheme {
       case Strict =>
         Right(Ordering[StrictVersion].compare(StrictVersion.fromVersion(x), StrictVersion.fromVersion(y)))
     }
+
+  def validateByScheme(versionScheme: VersionScheme)(x: Version): Either[String, Version] =
+    versionScheme match {
+      case PVP =>
+        PVPVersion.fromVersion(x).map(Function.const(x))
+      case SemVer =>
+        SemVerVersion.fromVersion(x).map(Function.const(x))
+      case EarlySemVer =>
+        EarlySemVerVersion.fromVersion(x).map(Function.const(x))
+      case Always | Strict =>
+        // Always and Strict are both always valid by scheme
+        Right(x)
+    }
 }

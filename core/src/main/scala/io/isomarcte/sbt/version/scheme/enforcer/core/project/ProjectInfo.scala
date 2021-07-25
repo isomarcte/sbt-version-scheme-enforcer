@@ -1,10 +1,14 @@
 package io.isomarcte.sbt.version.scheme.enforcer.core.project
 
+import scala.collection.immutable.SortedSet
 import io.isomarcte.sbt.version.scheme.enforcer.core._
+import io.isomarcte.sbt.version.scheme.enforcer.core.vcs._
 
 sealed abstract class ProjectInfo[A] extends Product with Serializable {
   def currentVersion: A
   def initialVersion: Option[A]
+  def tags: SortedSet[Tag[A]]
+  def versionSchemeString: String
 
   // final //
 
@@ -30,10 +34,11 @@ sealed abstract class ProjectInfo[A] extends Product with Serializable {
 }
 
 object ProjectInfo {
-  private[this] final case class ProjectInfoImpl[A](override val currentVersion: A, override val initialVersion: Option[A]) extends ProjectInfo[A]
+  // private[this] final case class ProjectInfoImpl[A](override val currentVersion: A, override val initialVersion: Option[A]) extends ProjectInfo[A]
 
   def apply[A](currentVersion: A, initialVersion: Option[A]): ProjectInfo[A] =
-    ProjectInfoImpl(currentVersion, initialVersion)
+    ???
+    // ProjectInfoImpl(currentVersion, initialVersion)
 
   def toPVP(projectInfo: ProjectInfo[Version]): Either[String, ProjectInfo[PVPVersion]] =
     projectInfo.emap(PVPVersion.fromVersion)

@@ -20,6 +20,21 @@ addCommandAlias(
   ";+clean;githubWorkflowGenerate;+test;+test:doc;+versionSchemeEnforcerCheck;+scalafmtAll;+scalafmtSbt;+scalafixAll;+scripted;"
 )
 
+// Functions //
+
+def isScala3(version: String): Boolean = version.startsWith("3")
+
+def initialImports(packages: List[String], isScala3: Boolean): String = {
+  val wildcard: Char =
+    if (isScala3) {
+      '*'
+    } else {
+      '_'
+    }
+
+  packages.map(value => s"import ${value}.${wildcard}").mkString("\n")
+}
+
 // ThisBuild //
 
 // General
@@ -124,6 +139,9 @@ lazy val core: Project = project
   .settings(commonSettings, publishSettings)
   .settings(
     name := s"${projectName}-core",
+    console / initialCommands := {
+      initialImports(List("io.isomarcte.sbt.version.scheme.enforcer.core", "io.isomarcte.sbt.version.scheme.enforcer.core.project", "io.isomarcte.sbt.version.scheme.enforcer.core.vcs"), isScala3(scalaBinaryVersion.value)) ++ "\nimport scala.collection.immutable.SortedSet"
+    },
     libraryDependencies ++= List(coursierG %% coursierVersionsA % coursierVersionsV) ++
       List(
         scalacheckG %% scalacheckA      % scalacheckV,
