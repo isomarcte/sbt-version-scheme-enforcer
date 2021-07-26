@@ -1,9 +1,9 @@
 package io.isomarcte.sbt.version.scheme.enforcer.core.project
 
 import io.isomarcte.sbt.version.scheme.enforcer.core.vcs._
+import io.isomarcte.sbt.version.scheme.enforcer.core.internal.emapSortedSet
 import scala.collection.immutable.SortedSet
-import io.isomarcte.sbt.version.scheme.enforcer.core.VersionChangeTypeClass
-import io.isomarcte.sbt.version.scheme.enforcer.core.VersionChangeType
+import io.isomarcte.sbt.version.scheme.enforcer.core._
 
 sealed abstract class BinaryChecks[A] extends Product with Serializable {
   protected implicit def orderingInstance: Ordering[A]
@@ -48,6 +48,13 @@ sealed abstract class BinaryChecks[A] extends Product with Serializable {
       forwardChecks = forwardChecks.map(f),
       bothChecks = bothChecks.map(f)
     )
+
+  final def emap[B: Ordering](f: A => Either[String, B]): Either[String, BinaryChecks[B]] =
+    for {
+      backward <- emapSortedSet(f)(backwardChecks)
+      forward <- emapSortedSet(f)(forwardChecks)
+      both <- emapSortedSet(f)(bothChecks)
+    } yield BinaryChecks(backwardChecks = backward, forwardChecks = forward, bothChecks = both)
 
   final def mapChecks[B: Ordering](f: SortedSet[A] => SortedSet[B]): BinaryChecks[B] =
     BinaryChecks(
@@ -95,6 +102,24 @@ sealed abstract class BinaryChecks[A] extends Product with Serializable {
     )
   }
 
+  final def greaterThan(value: A): BinaryChecks[A] = {
+    val ordering: Ordering[A] = implicitly[Ordering[A]]
+    import ordering.mkOrderingOps
+    this.filterChecks(
+      _ > value
+    )
+  }
+
+  final def max: BinaryChecks[A] =
+    mapChecks(
+      _.lastOption.fold(SortedSet.empty[A])(value => SortedSet(value))
+    )
+
+  final def min: BinaryChecks[A] =
+    mapChecks(
+      _.headOption.fold(SortedSet.empty[A])(value => SortedSet(value))
+    )
+
   override final def toString: String =
     s"BinaryChecks(backwardChecks = ${backwardChecks}, forwardChecks = ${forwardChecks}, bothChecks = ${bothChecks})"
 }
@@ -106,6 +131,16 @@ object BinaryChecks {
 
   def apply[A](backwardChecks: SortedSet[A], forwardChecks: SortedSet[A], bothChecks: SortedSet[A])(implicit A: Ordering[A]): BinaryChecks[A] =
     BinaryChecksImpl(backwardChecks, forwardChecks, bothChecks, A)
+
+  def applyVersionScheme(versionScheme: VersionScheme, binaryChecks: BinaryChecks[Version]): Either[String, BinaryChecks[versionScheme.VersionType]] = {
+    implicit val ordering: Ordering[versionScheme.VersionType] = versionScheme.versionTypeOrderingInstance
+    binaryChecks.emap(value => versionScheme.fromVersion(value))
+  }
+
+  def applyVersionSchemeT(versionScheme: VersionScheme, binaryChecks: BinaryChecks[Tag[Version]]): Either[String, BinaryChecks[Tag[versionScheme.VersionType]]] = {
+    implicit val ordering: Ordering[versionScheme.VersionType] = versionScheme.versionTypeOrderingInstance
+    binaryChecks.emap(value => value.emap(value => versionScheme.fromVersion(value)))
+  }
 
   def partition[A](currentVersion: A, otherVersions: Set[A])(implicit A: Ordering[A], V: VersionChangeTypeClass[A]): BinaryChecks[A] =
     otherVersions.foldLeft(BinaryChecks.empty[A]){
@@ -123,15 +158,7 @@ object BinaryChecks {
   def partitionByTag[A: Ordering: VersionChangeTypeClass](currentVersion: A, tags: Set[Tag[A]]): BinaryChecks[A] =
     partition[A](currentVersion, tags.map(_.version))
 
-  def lessThan[A: Ordering: VersionChangeTypeClass](currentVersion: A, checks: BinaryChecks[A]): BinaryChecks[A] =
-    checks.lessThan(currentVersion)
-
-  def closestByChange[A: Ordering: VersionChangeTypeClass](checks: BinaryChecks[A]): BinaryChecks[A] =
-    checks.mapChecks(
-      _.lastOption.fold(SortedSet.empty[A])(value => SortedSet(value))
-    )
-
-  def mostRecentTagsOnly[A: Ordering: VersionChangeTypeClass](checks: BinaryChecks[Tag[A]]): BinaryChecks[A] =
+  def mostRecentTagsOnly[A: Ordering: VersionChangeTypeClass](checks: BinaryChecks[Tag[A]]): BinaryChecks[Tag[A]] =
     checks.mapChecks(
       _.foldLeft(Option.empty[Tag[A]]){
         case (None, value) =>
@@ -143,5 +170,5 @@ object BinaryChecks {
       )(value =>
         SortedSet(value)
       )
-    ).map(_.version)
+    )
 }

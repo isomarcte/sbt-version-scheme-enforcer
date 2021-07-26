@@ -1,17 +1,63 @@
 package io.isomarcte.sbt.version.scheme.enforcer.core
 
-sealed abstract class VersionScheme extends Product with Serializable
+sealed abstract class VersionScheme extends Product with Serializable {
+  type VersionType
+  def versionTypeOrderingInstance: Ordering[VersionType]
+  def versionTypeVersionChangeTypeClassInstance: VersionChangeTypeClass[VersionType]
+  def fromVersion(value: Version): Either[String, VersionType]
+  def toVersion(value: VersionType): Version
+}
 
 object VersionScheme {
-  case object PVP extends VersionScheme
+  case object PVP extends VersionScheme {
+    override type VersionType = PVPVersion
+    override val versionTypeOrderingInstance: Ordering[VersionType] = Ordering[VersionType]
+    override val versionTypeVersionChangeTypeClassInstance: VersionChangeTypeClass[VersionType] = VersionChangeTypeClass[VersionType]
+    override def fromVersion(value: Version): Either[String,VersionType] =
+      PVPVersion.fromVersion(value)
+    override def toVersion(value: VersionType): Version =
+      Version(value.canonicalString)
+  }
 
-  case object SemVer extends VersionScheme
+  case object SemVer extends VersionScheme {
+    override type VersionType = SemVerVersion
+    override val versionTypeOrderingInstance: Ordering[VersionType] = Ordering[VersionType]
+    override val versionTypeVersionChangeTypeClassInstance: VersionChangeTypeClass[VersionType] = VersionChangeTypeClass[VersionType]
+    override def fromVersion(value: Version): Either[String,VersionType] =
+      SemVerVersion.fromVersion(value)
+    override def toVersion(value: VersionType): Version =
+      Version(value.canonicalString)
+  }
 
-  case object EarlySemVer extends VersionScheme
+  case object EarlySemVer extends VersionScheme {
+    override type VersionType = EarlySemVerVersion
+    override val versionTypeOrderingInstance: Ordering[VersionType] = Ordering[VersionType]
+    override val versionTypeVersionChangeTypeClassInstance: VersionChangeTypeClass[VersionType] = VersionChangeTypeClass[VersionType]
+    override def fromVersion(value: Version): Either[String,VersionType] =
+      EarlySemVerVersion.fromVersion(value)
+    override def toVersion(value: VersionType): Version =
+      Version(value.canonicalString)
+  }
 
-  case object Strict extends VersionScheme
+  case object Strict extends VersionScheme {
+    override type VersionType = StrictVersion
+    override val versionTypeOrderingInstance: Ordering[VersionType] = Ordering[VersionType]
+    override val versionTypeVersionChangeTypeClassInstance: VersionChangeTypeClass[VersionType] = VersionChangeTypeClass[VersionType]
+    override def fromVersion(value: Version): Either[String,VersionType] =
+      Right(StrictVersion.fromVersion(value))
+    override def toVersion(value: VersionType): Version =
+      Version(value.value)
+  }
 
-  case object Always extends VersionScheme
+  case object Always extends VersionScheme {
+    override type VersionType = AlwaysVersion
+    override val versionTypeOrderingInstance: Ordering[VersionType] = Ordering[VersionType]
+    override val versionTypeVersionChangeTypeClassInstance: VersionChangeTypeClass[VersionType] = VersionChangeTypeClass[VersionType]
+    override def fromVersion(value: Version): Either[String,VersionType] =
+      Right(AlwaysVersion.fromVersion(value))
+    override def toVersion(value: VersionType): Version =
+      Version(value.value)
+  }
 
   def fromCoursierVersionString(value: String): Option[VersionScheme] =
     value.trim.toLowerCase match {
