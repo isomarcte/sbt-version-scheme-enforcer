@@ -1,4 +1,4 @@
-.#!/usr/bin/env sh
+#!/usr/bin/env sh
 #
 # Tests for git VCS system.
 
@@ -34,6 +34,15 @@ ORIGINAL_WD="${PWD:?}"
 # defined. That said, they do all have the same feature set.
 TEMP_DIR="$(mktemp -d)"
 TEST_PROJECT="${TEMP_DIR}/test-project"
+
+# Register Cleanup trap
+
+if [ -z "$NO_CLEANUP" ]
+then
+    trap 'rm -rf ${TEMP_DIR}' EXIT
+else
+    echo "NO_CLEANUP is set, leaving ${TEMP_DIR} on exit."
+fi
 
 export VERSION_SCHEME_OUT_FILE="${TEMP_DIR}/out"
 

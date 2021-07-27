@@ -33,6 +33,15 @@ ORIGINAL_WD="${PWD:?}"
 TEMP_DIR="$(mktemp -d)"
 TEST_PROJECT="${TEMP_DIR}/test-project"
 
+# Register Cleanup trap
+
+if [ -z "$NO_CLEANUP" ]
+then
+    trap 'rm -rf ${TEMP_DIR}' EXIT
+else
+    echo "NO_CLEANUP is set, leaving ${TEMP_DIR} on exit."
+fi
+
 # Setup #
 
 cp -vr "${TEST_PROJECT_DIR:?}" "${TEST_PROJECT:?}"

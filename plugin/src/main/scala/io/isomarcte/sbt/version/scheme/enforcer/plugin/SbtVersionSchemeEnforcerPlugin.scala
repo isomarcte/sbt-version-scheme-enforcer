@@ -2,6 +2,7 @@ package io.isomarcte.sbt.version.scheme.enforcer.plugin
 
 import com.typesafe.tools.mima.plugin._
 import io.isomarcte.sbt.version.scheme.enforcer.core._
+import io.isomarcte.sbt.version.scheme.enforcer.core.project._
 import io.isomarcte.sbt.version.scheme.enforcer.core.vcs._
 import io.isomarcte.sbt.version.scheme.enforcer.plugin.SbtVersionSchemeEnforcer._
 import io.isomarcte.sbt.version.scheme.enforcer.plugin.vcs._
@@ -22,7 +23,20 @@ object SbtVersionSchemeEnforcerPlugin extends AutoPlugin {
       (versionSchemeEnforcerIntialVersion := None: @nowarn("cat=deprecation")),
       versionSchemeEnforcerInitialVersion := None,
       versionSchemeEnforcerPreviousVersion := None,
-      versionSchemeEnforcerTagDomain := TagDomain.All
+      versionSchemeEnforcerTagDomain := TagDomain.All,
+      versionSchemeEnforcerVCSTags := {
+        val s: TaskStreams = streams.value
+        val tagDomain: TagDomain =
+          versionSchemeEnforcerTagDomain.value
+        VCS.determineVCSOption.fold(
+          Option.empty[SortedSet[Tag[Version]]]
+        )((vcs: VCS) =>
+          vcs.tags(tagDomain).fold(
+            e => {s.log.error(e.getLocalizedMessage); Option.empty[SortedSet[Tag[Version]]]},
+            value => Some(value)
+          )
+        )
+      }
     )
 
   override def buildSettings: Seq[Def.Setting[_]] =
@@ -59,6 +73,12 @@ object SbtVersionSchemeEnforcerPlugin extends AutoPlugin {
 
   override def projectSettings: Seq[Def.Setting[_]] =
     Seq(
+      versionSchemeEnforcerProjectInfo := {
+        val v: Version = Version(version.value)
+        val iv: Option[Version] = versionSchemeEnforcerInitialVersion.value.map(Version.apply)
+        val tags: Option[SortedSet[Tag[Version]]] = versionSchemeEnforcerVCSTags.value
+        ProjectInfo(v, iv, tags)
+      },
       versionSchemeEnforcerInitialVersion := {
         versionSchemeEnforcerInitialVersion
           .value

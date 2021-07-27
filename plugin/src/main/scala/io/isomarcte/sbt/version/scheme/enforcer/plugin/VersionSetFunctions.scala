@@ -8,7 +8,7 @@ import io.isomarcte.sbt.version.scheme.enforcer.core._
 object VersionSetFunctions {
   type VersionSetF[A] = VersionScheme => ProjectInfo[A] => BinaryChecks[Tag[A]] => Either[String, BinaryCheckInfo[Tag[A], Tag[Version]]]
 
-  private def validate(versionScheme: VersionScheme, projectInfo: ProjectInfo[Version], checks: BinaryChecks[Tag[Version]]): Either[String, (ProjectInfo[versionScheme.VersionType], BinaryChecks[Tag[versionScheme.VersionType]], SortedSet[Tag[Version]])] =
+  private def validate(versionScheme: VersionScheme, projectInfo: ProjectInfo[Version], checks: BinaryChecks[Tag[Version]]): Either[String, (ProjectInfo[versionScheme.VersionType], BinaryChecks[Tag[versionScheme.VersionType]], Option[SortedSet[Tag[Version]]])] =
     for {
       (pi, invalid) <- ProjectInfo.applyVersionSchemeSplitTags(versionScheme, projectInfo)
       chks <- BinaryChecks.applyVersionSchemeT(versionScheme, checks)
@@ -30,6 +30,13 @@ object VersionSetFunctions {
         a <- f(versionScheme)(projectInfo)(checks)
         b <- g(versionScheme)(projectInfo)(checks)
       } yield a ++ b
+    }
+
+  def composeFilter[A](f: VersionSetF[A]): VersionSetF[A] => VersionSetF[A] =
+    (g: VersionSetF[A]) => (versionScheme: VersionScheme) => (projectInfo: ProjectInfo[A]) => (checks: BinaryChecks[Tag[A]]) => {
+      f(versionScheme)(projectInfo)(checks).flatMap((info: BinaryCheckInfo[Tag[A], Tag[Version]]) =>
+        g(versionScheme)(projectInfo)(info.checks).map(value => info.invalidTags.fold(value)(value.addInvalidTags))
+      )
     }
 
   val mostRecentTagsOnly: VersionSetF[Version] =
@@ -65,4 +72,11 @@ object VersionSetFunctions {
         )
       }
     }
+
+  val default: VersionSetF[Version] =
+    (composeFilter[Version](
+      lessThanCurrentVersion
+    ) andThen composeFilter(greaterThanInitialVersion))(
+      union(mostRecentTagsOnly, closestByVersion)
+    )
 }

@@ -1,5 +1,7 @@
 package io.isomarcte.sbt.version.scheme.enforcer.plugin
 
+import scala.collection.immutable.SortedSet
+import io.isomarcte.sbt.version.scheme.enforcer.core.project._
 import io.isomarcte.sbt.version.scheme.enforcer.core._
 import io.isomarcte.sbt.version.scheme.enforcer.core.vcs._
 import sbt._
@@ -47,6 +49,12 @@ trait Keys {
   final val versionSchemeEnforcerTagDomain: SettingKey[TagDomain] = settingKey[TagDomain](
     "The domain of VCS tags to consider when looking for previous releases to use in the binary compatibility check. For example, this can be TagDomain.All to consider all tags on the repository, or TagDomain.Reachable to only consider tags which are reachable (ancestors) of the current commit. The later case can be useful when you have multiple branches which should not be considered directly related for the purposes of binary compatibility. TagDomain.All is the default as of 2.1.1.0. The behavior prior to 2.1.1.0 was equivalent to TagDomain.Reachable."
   )
+
+  final val versionSchemeEnforcerVCSTags: TaskKey[Option[SortedSet[Tag[Version]]]] = taskKey[Option[SortedSet[Tag[Version]]]]("WIP")
+
+  final val versionSchemeEnforcerBinaryCheckInfo: TaskKey[BinaryCheckInfo[Version, Tag[Version]]] = taskKey[BinaryCheckInfo[Version, Tag[Version]]]("WIP")
+
+  final val versionSchemeEnforcerProjectInfo: TaskKey[ProjectInfo[Version]] = taskKey[ProjectInfo[Version]]("WIP")
 
   // Deprecated Settings
 

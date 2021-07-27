@@ -20,3 +20,16 @@ ThisBuild / outputVersionSchemeEnforcerPreviousVersionTask := {
     case _ => fos.close
   }
 }
+
+val outputVersionSchemeEnforcerVCSTagsTask: TaskKey[Unit] = taskKey[Unit](
+  "Output the current value of versionSchemeEnforcerVCSTags to a file. This is for testing."
+)
+
+ThisBuild / outputVersionSchemeEnforcerVCSTagsTask := {
+  val fos: FileOutputStream = new FileOutputStream(sys.env("VERSION_SCHEME_VCS_TAGS_FILE"))
+  Try(
+    fos.write(versionSchemeEnforcerVCSTags.value.toString.getBytes(StandardCharsets.UTF_8))
+  ) match {
+    case _ => fos.close
+  }
+}
