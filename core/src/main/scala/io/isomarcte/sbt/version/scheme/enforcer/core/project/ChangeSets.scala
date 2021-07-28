@@ -2,7 +2,7 @@ package io.isomarcte.sbt.version.scheme.enforcer.core.project
 
 // import io.isomarcte.sbt.version.scheme.enforcer.core.VersionChangeType
 // import io.isomarcte.sbt.version.scheme.enforcer.core.VersionChangeTypeClass
-// import io.isomarcte.sbt.version.scheme.enforcer.core.internal.setToSortedSet
+// import io.isomarcte.sbt.version.scheme.enforcer.core.internal.toSortedSet
 import scala.collection.immutable.SortedSet
 // import io.isomarcte.sbt.version.scheme.enforcer.core.VersionScheme
 
@@ -24,9 +24,9 @@ object ChangeSets {
 
   // def apply[A](major: Set[A], minor: Set[A], patch: Set[A])(implicit A: Ordering[A]): ChangeSets[A] =
   //   ChangeSetsImpl(
-  //     setToSortedSet(major),
-  //     setToSortedSet(minor),
-  //     setToSortedSet(patch),
+  //     toSortedSet(major),
+  //     toSortedSet(minor),
+  //     toSortedSet(patch),
   //     A
   //   )
 

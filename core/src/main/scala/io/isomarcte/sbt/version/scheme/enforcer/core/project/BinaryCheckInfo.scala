@@ -1,6 +1,6 @@
 package io.isomarcte.sbt.version.scheme.enforcer.core.project
 
-import io.isomarcte.sbt.version.scheme.enforcer.core.internal.setToSortedSet
+import io.isomarcte.sbt.version.scheme.enforcer.core.internal.toSortedSet
 import scala.collection.immutable.SortedSet
 
 sealed abstract class BinaryCheckInfo[A, B] extends Product with Serializable {
@@ -31,7 +31,7 @@ sealed abstract class BinaryCheckInfo[A, B] extends Product with Serializable {
     withInvalidTags(
       Some(
         invalidTags.fold(
-          setToSortedSet(value)
+          toSortedSet(value)
         )(_ ++ value)
       )
     )
@@ -57,5 +57,5 @@ object BinaryCheckInfo {
   def empty[A: Ordering, B: Ordering]: BinaryCheckInfo[A, B] = apply[A, B](BinaryChecks.empty[A], None)
 
   def apply[A, B](checks: BinaryChecks[A], invalidTags: Option[Set[B]])(implicit A: Ordering[A], B: Ordering[B]): BinaryCheckInfo[A, B] =
-    BinaryCheckInfoImpl(checks, invalidTags.map(value => setToSortedSet[B](value)), A, B)
+    BinaryCheckInfoImpl(checks, invalidTags.map(value => toSortedSet[B](value)), A, B)
 }

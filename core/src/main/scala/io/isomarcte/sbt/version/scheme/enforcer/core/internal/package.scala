@@ -6,7 +6,7 @@ import scala.collection.GenTraversableOnce
 package object internal {
   private[core] val separatorRegexString: String = """(?<=[^.])\.(?=[^.])"""
 
-  private[core] def setToSortedSet[A: Ordering](value: Set[A]): SortedSet[A] =
+  private[core] def toSortedSet[A: Ordering](value: GenTraversableOnce[A]): SortedSet[A] =
     value match {
       case value: SortedSet[A] => value
       case value =>

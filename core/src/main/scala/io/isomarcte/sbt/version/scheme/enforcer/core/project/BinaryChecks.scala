@@ -1,6 +1,7 @@
 package io.isomarcte.sbt.version.scheme.enforcer.core.project
 
 import io.isomarcte.sbt.version.scheme.enforcer.core.vcs._
+import io.isomarcte.sbt.version.scheme.enforcer.core.internal.toSortedSet
 import io.isomarcte.sbt.version.scheme.enforcer.core.internal.emapSortedSet
 import scala.collection.immutable.SortedSet
 import io.isomarcte.sbt.version.scheme.enforcer.core._
@@ -110,15 +111,21 @@ sealed abstract class BinaryChecks[A] extends Product with Serializable {
     )
   }
 
+  final def maxN(value: Int): BinaryChecks[A] =
+    mapChecks(checks =>
+      toSortedSet(checks.toVector.takeRight(value))
+    )
+
   final def max: BinaryChecks[A] =
+    maxN(1)
+
+  final def minN(value: Int): BinaryChecks[A] =
     mapChecks(
-      _.lastOption.fold(SortedSet.empty[A])(value => SortedSet(value))
+      _.take(value)
     )
 
   final def min: BinaryChecks[A] =
-    mapChecks(
-      _.headOption.fold(SortedSet.empty[A])(value => SortedSet(value))
-    )
+    minN(1)
 
   override final def toString: String =
     s"BinaryChecks(backwardChecks = ${backwardChecks}, forwardChecks = ${forwardChecks}, bothChecks = ${bothChecks})"
@@ -159,16 +166,10 @@ object BinaryChecks {
     partition[A](currentVersion, tags.map(_.version))
 
   def mostRecentTagsOnly[A: Ordering: VersionChangeTypeClass](checks: BinaryChecks[Tag[A]]): BinaryChecks[Tag[A]] =
-    checks.mapChecks(
-      _.foldLeft(Option.empty[Tag[A]]){
-        case (None, value) =>
-          Some(value)
-        case (Some(acc), value) =>
-          Some(Tag.creationDateOrderingInstance[A].max(acc, value))
-      }.fold(
-        SortedSet.empty[Tag[A]]
-      )(value =>
-        SortedSet(value)
-      )
+    mostRecentNTagsOnly(checks, 1)
+
+  def mostRecentNTagsOnly[A: Ordering: VersionChangeTypeClass](checks: BinaryChecks[Tag[A]], n: Int): BinaryChecks[Tag[A]] =
+    checks.mapChecks(value =>
+      toSortedSet(value.toVector.sorted(Tag.creationDateOrderingInstance.reverse).take(n))
     )
 }

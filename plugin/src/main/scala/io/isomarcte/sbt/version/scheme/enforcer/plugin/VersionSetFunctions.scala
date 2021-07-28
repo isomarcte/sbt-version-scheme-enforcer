@@ -39,19 +39,19 @@ object VersionSetFunctions {
       )
     }
 
-  val mostRecentTagsOnly: VersionSetF[Version] =
+  def mostRecentNTagsOnly(count: Int): VersionSetF[Version] =
     (versionScheme: VersionScheme) => (projectInfo: ProjectInfo[Version]) => (checks: BinaryChecks[Tag[Version]]) => {
       validateF(versionScheme, projectInfo, checks){_ => (checks: BinaryChecks[Tag[versionScheme.VersionType]]) =>
         implicit val ordering: Ordering[versionScheme.VersionType] = versionScheme.versionTypeOrderingInstance
         implicit val versionChangeTypeClassInstance: VersionChangeTypeClass[versionScheme.VersionType] = versionScheme.versionTypeVersionChangeTypeClassInstance
-        BinaryChecks.mostRecentTagsOnly(checks)
+        BinaryChecks.mostRecentNTagsOnly(checks, count)
       }
     }
 
-  val closestByVersion: VersionSetF[Version] =
+  def closestNByVersion(count: Int): VersionSetF[Version] =
     (versionScheme: VersionScheme) => (projectInfo: ProjectInfo[Version]) => (checks: BinaryChecks[Tag[Version]]) => {
       validateF(versionScheme, projectInfo, checks){_ => checks =>
-        checks.max
+        checks.maxN(count)
       }
     }
 
@@ -73,10 +73,10 @@ object VersionSetFunctions {
       }
     }
 
-  val default: VersionSetF[Version] =
+  def default(count: Int): VersionSetF[Version] =
     (composeFilter[Version](
       lessThanCurrentVersion
     ) andThen composeFilter(greaterThanInitialVersion))(
-      union(mostRecentTagsOnly, closestByVersion)
+      union(mostRecentNTagsOnly(count), closestNByVersion(count))
     )
 }

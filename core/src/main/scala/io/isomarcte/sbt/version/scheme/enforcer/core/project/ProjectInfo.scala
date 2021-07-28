@@ -1,7 +1,7 @@
 package io.isomarcte.sbt.version.scheme.enforcer.core.project
 
 import io.isomarcte.sbt.version.scheme.enforcer.core._
-import io.isomarcte.sbt.version.scheme.enforcer.core.internal.setToSortedSet
+import io.isomarcte.sbt.version.scheme.enforcer.core.internal.toSortedSet
 import io.isomarcte.sbt.version.scheme.enforcer.core.internal.emapSortedSet
 import io.isomarcte.sbt.version.scheme.enforcer.core.vcs._
 import scala.collection.immutable.SortedSet
@@ -49,7 +49,7 @@ object ProjectInfo {
   }
 
   def apply[A](currentVersion: A, initialVersion: Option[A], tags: Option[Set[Tag[A]]])(implicit A: Ordering[A]): ProjectInfo[A] =
-    ProjectInfoImpl(currentVersion, initialVersion, tags.map(tags => setToSortedSet[Tag[A]](tags)), A)
+    ProjectInfoImpl(currentVersion, initialVersion, tags.map(tags => toSortedSet[Tag[A]](tags)), A)
   def applyVersionScheme(versionScheme: VersionScheme, projectInfo: ProjectInfo[Version]): Either[String, ProjectInfo[versionScheme.VersionType]] = {
     implicit val versionTypeOrderingInstance: Ordering[versionScheme.VersionType] =
       versionScheme.versionTypeOrderingInstance
