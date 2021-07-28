@@ -54,7 +54,7 @@ trait Keys {
 
   final val versionSchemeEnforcerBinaryCheckInfo: TaskKey[BinaryCheckInfo[Version, Tag[Version]]] = taskKey[BinaryCheckInfo[Version, Tag[Version]]]("WIP")
 
-  final val versionSchemeEnforcerProjectInfo: TaskKey[ProjectInfo[Version]] = taskKey[ProjectInfo[Version]]("WIP")
+  final val versionSchemeEnforcerProjectVersion: TaskKey[ProjectVersionInfo[Version]] = taskKey[ProjectVersionInfo[Version]]("WIP")
 
   // Deprecated Settings
 

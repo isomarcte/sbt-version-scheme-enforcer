@@ -6,7 +6,7 @@ import io.isomarcte.sbt.version.scheme.enforcer.core.internal.emapSortedSet
 import io.isomarcte.sbt.version.scheme.enforcer.core.vcs._
 import scala.collection.immutable.SortedSet
 
-sealed abstract class ProjectInfo[A] extends Product with Serializable {
+sealed abstract class ProjectVersionInfo[A] extends Product with Serializable {
   protected implicit def orderingInstance: Ordering[A]
 
   def currentVersion: A
@@ -15,10 +15,10 @@ sealed abstract class ProjectInfo[A] extends Product with Serializable {
 
   // final //
 
-  final def map[B: Ordering](f: A => B): ProjectInfo[B] =
-    ProjectInfo(f(currentVersion), initialVersion.map(f), tags.map(_.map(_.map(f))))
+  final def map[B: Ordering](f: A => B): ProjectVersionInfo[B] =
+    ProjectVersionInfo(f(currentVersion), initialVersion.map(f), tags.map(_.map(_.map(f))))
 
-  final def emap[B: Ordering](f: A => Either[String, B]): Either[String, ProjectInfo[B]] = {
+  final def emap[B: Ordering](f: A => Either[String, B]): Either[String, ProjectVersionInfo[B]] = {
     // poor man's traverse
     val ive: Either[String, Option[B]] =
       initialVersion.fold(
@@ -36,21 +36,21 @@ sealed abstract class ProjectInfo[A] extends Product with Serializable {
       cv <- f(currentVersion)
       iv <- ive
       ts <- tse
-    } yield ProjectInfo(cv, iv, ts)
+    } yield ProjectVersionInfo(cv, iv, ts)
   }
 
   override final def toString: String =
-    s"ProjectInfo(currentVersion = ${currentVersion}, initialVersion = ${initialVersion}, tags = ${tags})"
+    s"ProjectVersionInfo(currentVersion = ${currentVersion}, initialVersion = ${initialVersion}, tags = ${tags})"
 }
 
-object ProjectInfo {
-  private[this] final case class ProjectInfoImpl[A](override val currentVersion: A, override val initialVersion: Option[A], override val tags: Option[SortedSet[Tag[A]]], orderingA: Ordering[A]) extends ProjectInfo[A] {
+object ProjectVersionInfo {
+  private[this] final case class ProjectVersionInfoImpl[A](override val currentVersion: A, override val initialVersion: Option[A], override val tags: Option[SortedSet[Tag[A]]], orderingA: Ordering[A]) extends ProjectVersionInfo[A] {
     override protected implicit val orderingInstance: Ordering[A] = orderingA
   }
 
-  def apply[A](currentVersion: A, initialVersion: Option[A], tags: Option[Set[Tag[A]]])(implicit A: Ordering[A]): ProjectInfo[A] =
-    ProjectInfoImpl(currentVersion, initialVersion, tags.map(tags => toSortedSet[Tag[A]](tags)), A)
-  def applyVersionScheme(versionScheme: VersionScheme, projectInfo: ProjectInfo[Version]): Either[String, ProjectInfo[versionScheme.VersionType]] = {
+  def apply[A](currentVersion: A, initialVersion: Option[A], tags: Option[Set[Tag[A]]])(implicit A: Ordering[A]): ProjectVersionInfo[A] =
+    ProjectVersionInfoImpl(currentVersion, initialVersion, tags.map(tags => toSortedSet[Tag[A]](tags)), A)
+  def applyVersionScheme(versionScheme: VersionScheme, projectInfo: ProjectVersionInfo[Version]): Either[String, ProjectVersionInfo[versionScheme.VersionType]] = {
     implicit val versionTypeOrderingInstance: Ordering[versionScheme.VersionType] =
       versionScheme.versionTypeOrderingInstance
     projectInfo.emap((version: Version) =>
@@ -58,7 +58,7 @@ object ProjectInfo {
     )
   }
 
-  def applyVersionSchemeSplitTags(versionScheme: VersionScheme, projectInfo: ProjectInfo[Version]): Either[String, (ProjectInfo[versionScheme.VersionType], Option[SortedSet[Tag[Version]]])] = {
+  def applyVersionSchemeSplitTags(versionScheme: VersionScheme, projectInfo: ProjectVersionInfo[Version]): Either[String, (ProjectVersionInfo[versionScheme.VersionType], Option[SortedSet[Tag[Version]]])] = {
     implicit val versionTypeOrderingInstance: Ordering[versionScheme.VersionType] =
       versionScheme.versionTypeOrderingInstance
     lazy val splitTags: Option[(SortedSet[Tag[versionScheme.VersionType]], SortedSet[Tag[Version]])] =
@@ -74,12 +74,12 @@ object ProjectInfo {
     for {
       cv <- versionScheme.fromVersion(projectInfo.currentVersion)
       iv <- projectInfo.initialVersion.fold(Right(None): Either[String, Option[versionScheme.VersionType]])(value => versionScheme.fromVersion(value).map(Some(_)))
-    } yield (ProjectInfo(cv, iv, splitTags.map(_._1)), splitTags.map(_._2))
+    } yield (ProjectVersionInfo(cv, iv, splitTags.map(_._1)), splitTags.map(_._2))
   }
 
-  implicit def orderingInstance[A: Ordering]: Ordering[ProjectInfo[A]] =
-    new Ordering[ProjectInfo[A]] {
-      override def compare(x: ProjectInfo[A], y: ProjectInfo[A]): Int =
+  implicit def orderingInstance[A: Ordering]: Ordering[ProjectVersionInfo[A]] =
+    new Ordering[ProjectVersionInfo[A]] {
+      override def compare(x: ProjectVersionInfo[A], y: ProjectVersionInfo[A]): Int =
         Ordering[A].compare(x.currentVersion, y.currentVersion) match {
           case 0 =>
             Ordering[Option[A]].compare(x.initialVersion, y.initialVersion)

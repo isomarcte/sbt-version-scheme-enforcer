@@ -73,11 +73,11 @@ object SbtVersionSchemeEnforcerPlugin extends AutoPlugin {
 
   override def projectSettings: Seq[Def.Setting[_]] =
     Seq(
-      versionSchemeEnforcerProjectInfo := {
+      versionSchemeEnforcerProjectVersion := {
         val v: Version = Version(version.value)
         val iv: Option[Version] = versionSchemeEnforcerInitialVersion.value.map(Version.apply)
         val tags: Option[SortedSet[Tag[Version]]] = versionSchemeEnforcerVCSTags.value
-        ProjectInfo(v, iv, tags)
+        ProjectVersionInfo(v, iv, tags)
       },
       versionSchemeEnforcerInitialVersion := {
         versionSchemeEnforcerInitialVersion

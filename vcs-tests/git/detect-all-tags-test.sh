@@ -76,32 +76,32 @@ cd "$TEST_PROJECT"
 # No repo yet
 
 sbt 'show versionSchemeEnforcerVCSTags'
-sbt 'show versionSchemeEnforcerProjectInfo'
+sbt 'show versionSchemeEnforcerProjectVersion'
 
 echo 'repo create'
 
 git init
 
 sbt 'show versionSchemeEnforcerVCSTags'
-sbt 'show versionSchemeEnforcerProjectInfo'
+sbt 'show versionSchemeEnforcerProjectVersion'
 
 echo 'add commit'
 
 add_commit
 
 sbt 'show versionSchemeEnforcerVCSTags'
-sbt 'show versionSchemeEnforcerProjectInfo'
+sbt 'show versionSchemeEnforcerProjectVersion'
 
 echo 'add tag 0'
 
 git tag '0.0.1' @
 
 sbt 'show versionSchemeEnforcerVCSTags'
-sbt 'show versionSchemeEnforcerProjectInfo'
+sbt 'show versionSchemeEnforcerProjectVersion'
 
 echo 'add tag 1'
 
 git tag '0.1.1' @
 
 sbt 'show versionSchemeEnforcerVCSTags'
-sbt 'show versionSchemeEnforcerProjectInfo'
+sbt 'show versionSchemeEnforcerProjectVersion'
