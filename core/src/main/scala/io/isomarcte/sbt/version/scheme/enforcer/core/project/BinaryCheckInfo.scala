@@ -1,5 +1,6 @@
 package io.isomarcte.sbt.version.scheme.enforcer.core.project
 
+import io.isomarcte.sbt.version.scheme.enforcer.core._
 import io.isomarcte.sbt.version.scheme.enforcer.core.internal.toSortedSet
 import scala.collection.immutable.SortedSet
 
@@ -8,54 +9,65 @@ sealed abstract class BinaryCheckInfo[A, B] extends Product with Serializable {
   protected implicit def orderingB: Ordering[B]
 
   def checks: BinaryChecks[A]
-  def invalidTags: Option[SortedSet[B]]
+  def invalidVersions: Option[SortedSet[BinaryCheckVersion[B]]]
 
   // final //
 
   final def withChecks[C: Ordering](value: BinaryChecks[C]): BinaryCheckInfo[C, B] =
-    BinaryCheckInfo(value, invalidTags)
+    BinaryCheckInfo(value, invalidVersions)
 
-  final def withInvalidTags[C: Ordering](value: Option[Set[C]]): BinaryCheckInfo[A, C] =
+  final def withInvalidVersions[C: Ordering](value: Option[Set[BinaryCheckVersion[C]]]): BinaryCheckInfo[A, C] =
     BinaryCheckInfo(checks, value)
 
   final def mapChecks[C: Ordering](f: BinaryChecks[A] => BinaryChecks[C]): BinaryCheckInfo[C, B] =
     withChecks(f(checks))
 
-  final def mapInvalidTags[C: Ordering](f: Option[Set[B]] => Option[Set[C]]): BinaryCheckInfo[A, C] =
-    withInvalidTags(f(invalidTags))
+  final def mapInvalidVersions[C: Ordering](f: Option[Set[BinaryCheckVersion[B]]] => Option[Set[BinaryCheckVersion[C]]]): BinaryCheckInfo[A, C] =
+    withInvalidVersions(f(invalidVersions))
 
   final def addChecks(value: BinaryChecks[A]): BinaryCheckInfo[A, B] =
     mapChecks(_ ++ value)
 
-  final def addInvalidTags(value: Set[B]): BinaryCheckInfo[A, B] =
-    withInvalidTags(
+  final def addInvalidVersions(value: Set[BinaryCheckVersion[B]]): BinaryCheckInfo[A, B] =
+    withInvalidVersions(
       Some(
-        invalidTags.fold(
+        invalidVersions.fold(
           toSortedSet(value)
         )(_ ++ value)
       )
     )
 
-  final def addInvalidTag(value: B): BinaryCheckInfo[A, B] =
-    addInvalidTags(SortedSet(value))
+  final def addInvalidTag(value: BinaryCheckVersion[B]): BinaryCheckInfo[A, B] =
+    addInvalidVersions(SortedSet(value))
 
   final def ++(that: BinaryCheckInfo[A, B]): BinaryCheckInfo[A, B] =
     BinaryCheckInfo(checks ++ that.checks,
-      invalidTags.flatMap(a => that.invalidTags.map(b => a ++ b)) orElse invalidTags orElse that.invalidTags
+      invalidVersions.flatMap(a => that.invalidVersions.map(b => a ++ b)) orElse invalidVersions orElse that.invalidVersions
     )
 
   override final def toString: String =
-    s"BinaryCheckInfo(checks = ${checks}, invalidTags = ${invalidTags})"
+    s"BinaryCheckInfo(checks = ${checks}, invalidVersions = ${invalidVersions})"
 }
 
 object BinaryCheckInfo {
-  private[this] final case class BinaryCheckInfoImpl[A, B](override val checks: BinaryChecks[A], override val invalidTags: Option[SortedSet[B]], _orderingA: Ordering[A], _orderingB: Ordering[B]) extends BinaryCheckInfo[A, B] {
+  private[this] final case class BinaryCheckInfoImpl[A, B](override val checks: BinaryChecks[A], override val invalidVersions: Option[SortedSet[BinaryCheckVersion[B]]], _orderingA: Ordering[A], _orderingB: Ordering[B]) extends BinaryCheckInfo[A, B] {
     override protected implicit def orderingA: Ordering[A] = _orderingA
     override protected implicit def orderingB: Ordering[B] = _orderingB
   }
 
   def empty[A: Ordering, B: Ordering]: BinaryCheckInfo[A, B] = apply[A, B](BinaryChecks.empty[A], None)
 
-  def apply[A, B](checks: BinaryChecks[A], invalidTags: Option[Set[B]])(implicit A: Ordering[A], B: Ordering[B]): BinaryCheckInfo[A, B] =
-    BinaryCheckInfoImpl(checks, invalidTags.map(value => toSortedSet[B](value)), A, B)
+  def apply[A, B](checks: BinaryChecks[A], invalidVersions: Option[Set[BinaryCheckVersion[B]]])(implicit A: Ordering[A], B: Ordering[B]): BinaryCheckInfo[A, B] =
+    BinaryCheckInfoImpl(checks, invalidVersions.map(value => toSortedSet[BinaryCheckVersion[B]](value)), A, B)
+
+  def partitionFromSchemeAndProjectVersionInfo(versionScheme: VersionScheme)(projectVersionInfo: ProjectVersionInfo[Version]): Either[String, Option[BinaryCheckInfo[versionScheme.VersionType, Version]]] = {
+    implicit val orderingInstance: Ordering[versionScheme.VersionType] = versionScheme.versionTypeOrderingInstance
+    implicit val versionChangeTypeClassInstance: VersionChangeTypeClass[versionScheme.VersionType] = versionScheme.versionTypeVersionChangeTypeClassInstance
+    ProjectVersionInfo.applyVersionSchemeSplitTags(versionScheme, projectVersionInfo).map{
+      case (projectVersionInfo, invalidVersions) =>
+        BinaryChecks.partitionFromProjectVersionInfo(projectVersionInfo).map(checks =>
+          BinaryCheckInfo(checks, invalidVersions.map(value => value.map(tag => BinaryCheckVersion.fromTag[Version](tag))))
+        )
+    }
+  }
 }

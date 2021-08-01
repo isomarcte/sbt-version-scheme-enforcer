@@ -36,6 +36,12 @@ object SbtVersionSchemeEnforcerPlugin extends AutoPlugin {
             value => Some(value)
           )
         )
+      },
+      versionSchemeEnforcerBinaryCheckInfo := {
+        val logger: String = streams.value.log
+        versionScheme.?.value.flatten.fold(
+          logger.error(s"versionScheme is not set, ")
+        )
       }
     )
 
@@ -73,7 +79,7 @@ object SbtVersionSchemeEnforcerPlugin extends AutoPlugin {
 
   override def projectSettings: Seq[Def.Setting[_]] =
     Seq(
-      versionSchemeEnforcerProjectVersion := {
+      versionSchemeEnforcerProjectVersionInfo := {
         val v: Version = Version(version.value)
         val iv: Option[Version] = versionSchemeEnforcerInitialVersion.value.map(Version.apply)
         val tags: Option[SortedSet[Tag[Version]]] = versionSchemeEnforcerVCSTags.value

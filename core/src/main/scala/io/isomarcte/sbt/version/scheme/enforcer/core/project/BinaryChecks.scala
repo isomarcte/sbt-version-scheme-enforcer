@@ -162,8 +162,10 @@ object BinaryChecks {
         }
     }
 
-  def partitionByTag[A: Ordering: VersionChangeTypeClass](currentVersion: A, tags: Set[Tag[A]]): BinaryChecks[A] =
-    partition[A](currentVersion, tags.map(_.version))
+  def partitionFromProjectVersionInfo[A: Ordering: VersionChangeTypeClass](projectVersionInfo: ProjectVersionInfo[A]): Option[BinaryChecks[A]] =
+    projectVersionInfo.tags.map(tags =>
+      BinaryChecks.partition(Tag(projectVersionInfo.currentVersion), tags).map(_.version)
+    )
 
   def mostRecentTagsOnly[A: Ordering: VersionChangeTypeClass](checks: BinaryChecks[Tag[A]]): BinaryChecks[Tag[A]] =
     mostRecentNTagsOnly(checks, 1)

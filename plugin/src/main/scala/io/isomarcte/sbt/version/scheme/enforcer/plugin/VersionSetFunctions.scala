@@ -6,7 +6,7 @@ import scala.collection.immutable.SortedSet
 import io.isomarcte.sbt.version.scheme.enforcer.core._
 
 object VersionSetFunctions {
-  type VersionSetF[A] = VersionScheme => ProjectVersionInfo[A] => BinaryChecks[Tag[A]] => Either[String, BinaryCheckInfo[Tag[A], Tag[Version]]]
+  type VersionSetF[A] = VersionScheme => ProjectVersionInfo[A] => BinaryCheckInfo[A, Version] => Either[String, BinaryCheckInfo[A, Version]]
 
   private def validate(versionScheme: VersionScheme, projectInfo: ProjectVersionInfo[Version], checks: BinaryChecks[Tag[Version]]): Either[String, (ProjectVersionInfo[versionScheme.VersionType], BinaryChecks[Tag[versionScheme.VersionType]], Option[SortedSet[Tag[Version]]])] =
     for {
@@ -24,18 +24,18 @@ object VersionSetFunctions {
         ).mapChecks(checks => checks.map(value => value.map(value => versionScheme.toVersion(value))))
     }
 
-  def union(f: VersionSetF[Version], g: VersionSetF[Version]): VersionSetF[Version] =
-    (versionScheme: VersionScheme) => (projectInfo: ProjectVersionInfo[Version]) => (checks: BinaryChecks[Tag[Version]]) => {
+  def union[A](f: VersionSetF[A], g: VersionSetF[A]): VersionSetF[A] =
+    (versionScheme: VersionScheme) => (projectInfo: ProjectVersionInfo[A]) => (info: BinaryCheckInfo[Tag[A], Tag[Version]]) => {
       for {
-        a <- f(versionScheme)(projectInfo)(checks)
-        b <- g(versionScheme)(projectInfo)(checks)
+        a <- f(versionScheme)(projectInfo)(info)
+        b <- g(versionScheme)(projectInfo)(info)
       } yield a ++ b
     }
 
   def composeFilter[A](f: VersionSetF[A]): VersionSetF[A] => VersionSetF[A] =
-    (g: VersionSetF[A]) => (versionScheme: VersionScheme) => (projectInfo: ProjectVersionInfo[A]) => (checks: BinaryChecks[Tag[A]]) => {
-      f(versionScheme)(projectInfo)(checks).flatMap((info: BinaryCheckInfo[Tag[A], Tag[Version]]) =>
-        g(versionScheme)(projectInfo)(info.checks).map(value => info.invalidTags.fold(value)(value.addInvalidTags))
+    (g: VersionSetF[A]) => (versionScheme: VersionScheme) => (projectInfo: ProjectVersionInfo[A]) => (info: BinaryCheckInfo[A, Tag[Version]]) => {
+      f(versionScheme)(projectInfo)(info).flatMap((info: BinaryCheckInfo[A, Tag[Version]]) =>
+        g(versionScheme)(projectInfo)(info).map(value => info.invalidTags.fold(value)(value.addInvalidTags))
       )
     }
 

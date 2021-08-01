@@ -15,6 +15,12 @@ sealed abstract class ProjectVersionInfo[A] extends Product with Serializable {
 
   // final //
 
+  final def withTags(value: Option[Set[Tag[A]]]): ProjectVersionInfo[A] =
+    ProjectVersionInfo(currentVersion, initialVersion, value.map(value => toSortedSet(value)))
+
+  final def mapTags(f: Option[Set[Tag[A]]] => Option[Set[Tag[A]]]): ProjectVersionInfo[A] =
+    withTags(f(tags))
+
   final def map[B: Ordering](f: A => B): ProjectVersionInfo[B] =
     ProjectVersionInfo(f(currentVersion), initialVersion.map(f), tags.map(_.map(_.map(f))))
 
@@ -87,4 +93,6 @@ object ProjectVersionInfo {
             otherwise
         }
     }
+
+
 }
