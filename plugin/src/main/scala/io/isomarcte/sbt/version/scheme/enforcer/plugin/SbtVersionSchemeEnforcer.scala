@@ -115,6 +115,7 @@ private[plugin] object SbtVersionSchemeEnforcer {
               )
           }.flatMap{previousVersions =>
             val versions: SortedSet[BinaryCheckVersion[versionScheme.VersionType]] = previousVersions ++ projectVersionInfo.tags.getOrElse(SortedSet.empty[Tag[versionScheme.VersionType]]).map(BinaryCheckVersion.fromTag)
+            BinaryCheckInfo(
             BinaryChecks.partition(
               BinaryCheckVersion.fromNonTag(projectVersionInfo.currentVersion), versions
             )
