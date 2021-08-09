@@ -2,8 +2,6 @@ package io.isomarcte.sbt.version.scheme.enforcer.plugin
 
 import io.isomarcte.sbt.version.scheme.enforcer.core.project._
 import io.isomarcte.sbt.version.scheme.enforcer.core.project.BinaryCheckInfo.BinaryCheckInfoV
-import io.isomarcte.sbt.version.scheme.enforcer.core.vcs._
-import scala.collection.immutable.SortedSet
 import io.isomarcte.sbt.version.scheme.enforcer.core._
 
 object VersionSetFunctions {
@@ -26,22 +24,6 @@ object VersionSetFunctions {
 
   def fromSchemed(versionScheme: VersionScheme)(f: BinaryCheckF[versionScheme.VersionType]): BinaryCheckEF[Version] =
     fromSchemedE(versionScheme)(projectVersionInfo => binaryCheckInfo => Right(f(projectVersionInfo)(binaryCheckInfo)))
-
-  private def validate(versionScheme: VersionScheme, projectInfo: ProjectVersionInfo[Version], checks: BinaryChecks[Tag[Version]]): Either[String, (ProjectVersionInfo[versionScheme.VersionType], BinaryChecks[Tag[versionScheme.VersionType]], Option[SortedSet[Tag[Version]]])] =
-    for {
-      (pi, invalid) <- ProjectVersionInfo.applyVersionSchemeSplitTags(versionScheme, projectInfo)
-      chks <- BinaryChecks.applyVersionSchemeT(versionScheme, checks)
-    } yield (pi, chks, invalid)
-
-  private def validateF(versionScheme: VersionScheme, projectInfo: ProjectVersionInfo[Version], checks: BinaryChecks[Tag[Version]])(f: ProjectVersionInfo[versionScheme.VersionType] => BinaryChecks[Tag[versionScheme.VersionType]] => BinaryChecks[Tag[versionScheme.VersionType]]): Either[String, BinaryCheckInfo[Tag[Version], Tag[Version]]] =
-    validate(versionScheme, projectInfo, checks).map{
-      case (projectInfo, checks, invalid) =>
-        implicit val ordering: Ordering[versionScheme.VersionType] = versionScheme.versionTypeOrderingInstance
-        BinaryCheckInfo(
-          f(projectInfo)(checks),
-          invalid
-        ).mapChecks(checks => checks.map(value => value.map(value => versionScheme.toVersion(value))))
-    }
 
   def union[A](f: VersionSetEF[A], g: VersionSetEF[A]): VersionSetEF[A] =
     (versionScheme: VersionScheme) => (projectInfo: ProjectVersionInfo[A]) => (info: BinaryCheckInfoV[A]) => {
@@ -77,25 +59,27 @@ object VersionSetFunctions {
       }
     )
 
-  val lessThanCurrentVersion: VersionSetF[Version] =
-    (versionScheme: VersionScheme) => (projectInfo: ProjectVersionInfo[Version]) => (checks: BinaryChecks[Tag[Version]]) => {
-      validateF(versionScheme, projectInfo, checks){projectInfo => checks =>
-        checks.lessThan(Tag(projectInfo.currentVersion))
+  val lessThanCurrentVersion: VersionSetEF[Version] =
+    (versionScheme: VersionScheme) => fromSchemed(versionScheme)(
+      (projectVersionInfo: ProjectVersionInfo[versionScheme.VersionType]) => (binCheckInfo: BinaryCheckInfoV[versionScheme.VersionType]) => {
+        implicit val ordering: Ordering[versionScheme.VersionType] = versionScheme.versionTypeOrderingInstance
+        binCheckInfo.mapChecks(_.lessThan(BinaryCheckVersion.fromNonTag(projectVersionInfo.currentVersion)))
       }
-    }
+    )
 
-  val greaterThanInitialVersion: VersionSetF[Version] =
-    (versionScheme: VersionScheme) => (projectInfo: ProjectVersionInfo[Version]) => (checks: BinaryChecks[Tag[Version]]) => {
-      validateF(versionScheme, projectInfo, checks){projectInfo => checks =>
-        projectInfo.initialVersion.fold(
-          checks
+  val greaterThanInitialVersion: VersionSetEF[Version] =
+    (versionScheme: VersionScheme) => fromSchemed(versionScheme)(
+      (projectVersionInfo: ProjectVersionInfo[versionScheme.VersionType]) => (binCheckInfo: BinaryCheckInfoV[versionScheme.VersionType]) => {
+        implicit val ordering: Ordering[versionScheme.VersionType] = versionScheme.versionTypeOrderingInstance
+        projectVersionInfo.initialVersion.fold(
+          binCheckInfo
         )(initialVersion =>
-          checks.greaterThan(Tag(initialVersion))
+          binCheckInfo.mapChecks(_.greaterThan(BinaryCheckVersion.fromNonTag(initialVersion)))
         )
       }
-    }
+    )
 
-  def default(count: Int): VersionSetF[Version] =
+  def default(count: Int): VersionSetEF[Version] =
     (composeChecks[Version](
       lessThanCurrentVersion
     ) andThen composeChecks(greaterThanInitialVersion))(
