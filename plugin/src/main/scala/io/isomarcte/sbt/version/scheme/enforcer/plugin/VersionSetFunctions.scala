@@ -7,10 +7,12 @@ import scala.collection.immutable.SortedSet
 import io.isomarcte.sbt.version.scheme.enforcer.core._
 
 object VersionSetFunctions {
-  type BinaryCheckF[A] = ProjectVersionInfo[A] => BinaryCheckInfoV[A] => Either[String, BinaryCheckInfoV[A]]
+  type BinaryCheckEF[A] = ProjectVersionInfo[A] => BinaryCheckInfoV[A] => Either[String, BinaryCheckInfoV[A]]
+  type BinaryCheckF[A] = ProjectVersionInfo[A] => BinaryCheckInfoV[A] => BinaryCheckInfoV[A]
+  type VersionSetEF[A] = VersionScheme => BinaryCheckEF[A]
   type VersionSetF[A] = VersionScheme => BinaryCheckF[A]
 
-  def fromSchemed(versionScheme: VersionScheme)(f: BinaryCheckF[versionScheme.VersionType]): BinaryCheckF[Version] =
+  def fromSchemedE(versionScheme: VersionScheme)(f: BinaryCheckEF[versionScheme.VersionType]): BinaryCheckEF[Version] =
     (projectVersionInfo: ProjectVersionInfo[Version]) => (binaryCheckInfo: BinaryCheckInfoV[Version]) => {
       ProjectVersionInfo.applyVersionSchemeSplitTags(versionScheme, projectVersionInfo).flatMap{
         case (projectVersionInfo, _) =>
@@ -21,6 +23,9 @@ object VersionSetFunctions {
           )
       }
     }
+
+  def fromSchemed(versionScheme: VersionScheme)(f: BinaryCheckF[versionScheme.VersionType]): BinaryCheckEF[Version] =
+    fromSchemedE(versionScheme)(projectVersionInfo => binaryCheckInfo => Right(f(projectVersionInfo)(binaryCheckInfo)))
 
   private def validate(versionScheme: VersionScheme, projectInfo: ProjectVersionInfo[Version], checks: BinaryChecks[Tag[Version]]): Either[String, (ProjectVersionInfo[versionScheme.VersionType], BinaryChecks[Tag[versionScheme.VersionType]], Option[SortedSet[Tag[Version]]])] =
     for {
@@ -38,7 +43,7 @@ object VersionSetFunctions {
         ).mapChecks(checks => checks.map(value => value.map(value => versionScheme.toVersion(value))))
     }
 
-  def union[A](f: VersionSetF[A], g: VersionSetF[A]): VersionSetF[A] =
+  def union[A](f: VersionSetEF[A], g: VersionSetEF[A]): VersionSetEF[A] =
     (versionScheme: VersionScheme) => (projectInfo: ProjectVersionInfo[A]) => (info: BinaryCheckInfoV[A]) => {
       for {
         a <- f(versionScheme)(projectInfo)(info)
@@ -46,40 +51,31 @@ object VersionSetFunctions {
       } yield a ++ b
     }
 
-  def composeChecks[A](f: VersionSetF[A]): VersionSetF[A] => VersionSetF[A] =
-    (g: VersionSetF[A]) => (versionScheme: VersionScheme) => (projectInfo: ProjectVersionInfo[A]) => (info: BinaryCheckInfoV[A]) => {
+  def composeChecks[A](f: VersionSetEF[A]): VersionSetEF[A] => VersionSetEF[A] =
+    (g: VersionSetEF[A]) => (versionScheme: VersionScheme) => (projectInfo: ProjectVersionInfo[A]) => (info: BinaryCheckInfoV[A]) => {
       f(versionScheme)(projectInfo)(info).flatMap((info: BinaryCheckInfoV[A]) =>
         g(versionScheme)(projectInfo)(info).map(value => info.invalidVersions.fold(value)(value.addInvalidVersions))
       )
     }
 
-  def mostRecentNTagsOnly(count: Int): VersionSetF[Version] =
+  def mostRecentNTagsOnly(count: Int): VersionSetEF[Version] =
     (versionScheme: VersionScheme) => fromSchemed(versionScheme)(
       (_: ProjectVersionInfo[versionScheme.VersionType]) => (binCheckInfo: BinaryCheckInfoV[versionScheme.VersionType]) => {
         implicit val ordering: Ordering[versionScheme.VersionType] = versionScheme.versionTypeOrderingInstance
         implicit val versionChangeTypeClassInstance: VersionChangeTypeClass[versionScheme.VersionType] = versionScheme.versionTypeVersionChangeTypeClassInstance
-        Right(
-          binCheckInfo.mapChecks(checks =>
-            BinaryChecks.mostRecentNTagsOnly(checks, count)
-          )
+        binCheckInfo.mapChecks(checks =>
+          BinaryChecks.mostRecentNTagsOnly(checks, count)
         )
       }
     )
 
-(projectInfo: ProjectVersionInfo[Version]) => (info: BinaryCheckInfoV[Version]) => {
-      validateF(versionScheme, projectInfo, checks){_ => (checks: BinaryChecks[Tag[versionScheme.VersionType]]) =>
+  def closestNByVersion(count: Int): VersionSetEF[Version] =
+    (versionScheme: VersionScheme) => fromSchemed(versionScheme)(
+      (_: ProjectVersionInfo[versionScheme.VersionType]) => (binCheckInfo: BinaryCheckInfoV[versionScheme.VersionType]) => {
         implicit val ordering: Ordering[versionScheme.VersionType] = versionScheme.versionTypeOrderingInstance
-        implicit val versionChangeTypeClassInstance: VersionChangeTypeClass[versionScheme.VersionType] = versionScheme.versionTypeVersionChangeTypeClassInstance
-        BinaryChecks.mostRecentNTagsOnly(checks, count)
+        binCheckInfo.mapChecks(_.maxN(count))
       }
-    }
-
-  def closestNByVersion(count: Int): VersionSetF[Version] =
-    (versionScheme: VersionScheme) => (projectInfo: ProjectVersionInfo[Version]) => (checks: BinaryChecks[Tag[Version]]) => {
-      validateF(versionScheme, projectInfo, checks){_ => checks =>
-        checks.maxN(count)
-      }
-    }
+    )
 
   val lessThanCurrentVersion: VersionSetF[Version] =
     (versionScheme: VersionScheme) => (projectInfo: ProjectVersionInfo[Version]) => (checks: BinaryChecks[Tag[Version]]) => {
