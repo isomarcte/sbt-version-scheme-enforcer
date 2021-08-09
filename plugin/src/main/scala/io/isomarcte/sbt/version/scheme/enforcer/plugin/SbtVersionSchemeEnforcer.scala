@@ -91,40 +91,40 @@ private[plugin] object SbtVersionSchemeEnforcer {
         )
       )
 
-  def binaryCheckInfo(versionScheme: String, projectVersionInfo: ProjectVersionInfo[Version], previousVersions: Option[SortedSet[Version]], versionSetF: VersionSetFunctions.VersionSetF[Version]): Either[String, Option[BinaryCheckInfo[Version, Version]]] =
-    if (projectVersionInfo.tags.isEmpty && previousVersions.isEmpty) {
-      // Neither tags nor previousVersions were set, so we have no
-      // BinaryCheckInfo. This is distinct from either or both of them being
-      // set, but both being empty.
-      Right(None): Either[String, Option[BinaryCheckInfo[Version, Tag[Version]]]]
-    } else {
-    VersionScheme.fromCoursierVersionString(versionScheme).fold(
-      Left(s"Unknown versionScheme value: ${versionScheme}"): Either[String, Option[BinaryCheckInfo[Version, Tag[Version]]]]
-    ){(versionScheme: VersionScheme) =>
-      implicit val versionChangeTypeClassInstance: VersionChangeTypeClass[versionScheme.VersionType] = versionScheme.versionTypeVersionChangeTypeClassInstance
-      implicit val orderingInstance: Ordering[versionScheme.VersionType] = versionScheme.versionTypeOrderingInstance
+  // def binaryCheckInfo(versionScheme: String, projectVersionInfo: ProjectVersionInfo[Version], previousVersions: Option[SortedSet[Version]], versionSetF: VersionSetFunctions.VersionSetF[Version]): Either[String, Option[BinaryCheckInfo[Version, Version]]] =
+  //   if (projectVersionInfo.tags.isEmpty && previousVersions.isEmpty) {
+  //     // Neither tags nor previousVersions were set, so we have no
+  //     // BinaryCheckInfo. This is distinct from either or both of them being
+  //     // set, but both being empty.
+  //     Right(None): Either[String, Option[BinaryCheckInfo[Version, Tag[Version]]]]
+  //   } else {
+  //   VersionScheme.fromCoursierVersionString(versionScheme).fold(
+  //     Left(s"Unknown versionScheme value: ${versionScheme}"): Either[String, Option[BinaryCheckInfo[Version, Tag[Version]]]]
+  //   ){(versionScheme: VersionScheme) =>
+  //     implicit val versionChangeTypeClassInstance: VersionChangeTypeClass[versionScheme.VersionType] = versionScheme.versionTypeVersionChangeTypeClassInstance
+  //     implicit val orderingInstance: Ordering[versionScheme.VersionType] = versionScheme.versionTypeOrderingInstance
 
-      ProjectVersionInfo.applyVersionSchemeSplitTags(versionScheme, projectVersionInfo).flatMap{
-        case (projectVersionInfo, invalidTags) =>
-          previousVersions.getOrElse(SortedSet.empty[Version]).foldLeft(Right(SortedSet.empty): Either[String, SortedSet[BinaryCheckVersion[versionScheme.VersionType]]]){
-            case (acc, value) =>
-              acc.flatMap(acc =>
-                versionScheme.fromVersion(value).map(value =>
-                  acc ++ SortedSet(BinaryCheckVersion.fromNonTag(value))
-                )
-              )
-          }.flatMap{previousVersions =>
-            val versions: SortedSet[BinaryCheckVersion[versionScheme.VersionType]] = previousVersions ++ projectVersionInfo.tags.getOrElse(SortedSet.empty[Tag[versionScheme.VersionType]]).map(BinaryCheckVersion.fromTag)
-            BinaryCheckInfo(
-            BinaryChecks.partition(
-              BinaryCheckVersion.fromNonTag(projectVersionInfo.currentVersion), versions
-            )
-          }
+  //     ProjectVersionInfo.applyVersionSchemeSplitTags(versionScheme, projectVersionInfo).flatMap{
+  //       case (projectVersionInfo, invalidTags) =>
+  //         previousVersions.getOrElse(SortedSet.empty[Version]).foldLeft(Right(SortedSet.empty): Either[String, SortedSet[BinaryCheckVersion[versionScheme.VersionType]]]){
+  //           case (acc, value) =>
+  //             acc.flatMap(acc =>
+  //               versionScheme.fromVersion(value).map(value =>
+  //                 acc ++ SortedSet(BinaryCheckVersion.fromNonTag(value))
+  //               )
+  //             )
+  //         }.flatMap{previousVersions =>
+  //           val versions: SortedSet[BinaryCheckVersion[versionScheme.VersionType]] = previousVersions ++ projectVersionInfo.tags.getOrElse(SortedSet.empty[Tag[versionScheme.VersionType]]).map(BinaryCheckVersion.fromTag)
+  //           BinaryCheckInfo(
+  //           BinaryChecks.partition(
+  //             BinaryCheckVersion.fromNonTag(projectVersionInfo.currentVersion), versions
+  //           )
+  //         }
 
-        val baseBinaryChecks: BinaryChecks[BinaryCheckVersion[versionScheme.VersionType]] =
-          BinaryChecks.partition(BinaryCheckVersion.fromNonTag(projectVersionInfo.currentVersion), versions)
-        versionSetF(versionScheme, projectVersionInfo, baseBinaryChecks).map(Some(_))
-      }
-    }
-    }
+  //       val baseBinaryChecks: BinaryChecks[BinaryCheckVersion[versionScheme.VersionType]] =
+  //         BinaryChecks.partition(BinaryCheckVersion.fromNonTag(projectVersionInfo.currentVersion), versions)
+  //       versionSetF(versionScheme, projectVersionInfo, baseBinaryChecks).map(Some(_))
+  //     }
+  //   }
+  //   }
 }

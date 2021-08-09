@@ -134,14 +134,18 @@ sealed abstract class BinaryChecks[A] extends Product with Serializable {
 object BinaryChecks {
   private[this] final case class BinaryChecksImpl[A](override val backwardChecks: SortedSet[A], override val forwardChecks: SortedSet[A], override val bothChecks: SortedSet[A], override protected implicit val orderingInstance: Ordering[A]) extends BinaryChecks[A]
 
+  type BinaryChecksV[A] = BinaryChecks[BinaryCheckVersion[A]]
+
   def empty[A: Ordering]: BinaryChecks[A] = apply(SortedSet.empty, SortedSet.empty, SortedSet.empty)
 
   def apply[A](backwardChecks: SortedSet[A], forwardChecks: SortedSet[A], bothChecks: SortedSet[A])(implicit A: Ordering[A]): BinaryChecks[A] =
     BinaryChecksImpl(backwardChecks, forwardChecks, bothChecks, A)
 
-  def applyVersionScheme(versionScheme: VersionScheme, binaryChecks: BinaryChecks[Version]): Either[String, BinaryChecks[versionScheme.VersionType]] = {
+  def applyVersionScheme(versionScheme: VersionScheme, binaryChecks: BinaryChecksV[Version]): Either[String, BinaryChecksV[versionScheme.VersionType]] = {
     implicit val ordering: Ordering[versionScheme.VersionType] = versionScheme.versionTypeOrderingInstance
-    binaryChecks.emap(value => versionScheme.fromVersion(value))
+    binaryChecks.emap(
+      _.emap(value => versionScheme.fromVersion(value))
+    )
   }
 
   def applyVersionSchemeT(versionScheme: VersionScheme, binaryChecks: BinaryChecks[Tag[Version]]): Either[String, BinaryChecks[Tag[versionScheme.VersionType]]] = {
@@ -167,11 +171,21 @@ object BinaryChecks {
       BinaryChecks.partition(Tag(projectVersionInfo.currentVersion), tags).map(_.version)
     )
 
-  def mostRecentTagsOnly[A: Ordering: VersionChangeTypeClass](checks: BinaryChecks[Tag[A]]): BinaryChecks[Tag[A]] =
+  def mostRecentTagsOnly[A: Ordering: VersionChangeTypeClass](checks: BinaryChecksV[A]): BinaryChecksV[A] =
     mostRecentNTagsOnly(checks, 1)
 
-  def mostRecentNTagsOnly[A: Ordering: VersionChangeTypeClass](checks: BinaryChecks[Tag[A]], n: Int): BinaryChecks[Tag[A]] =
+  def mostRecentNTagsOnly[A: Ordering: VersionChangeTypeClass](checks: BinaryChecksV[A], n: Int): BinaryChecksV[A] =
     checks.mapChecks(value =>
-      toSortedSet(value.toVector.sorted(Tag.creationDateOrderingInstance.reverse).take(n))
+      toSortedSet(
+        value.flatMap(value =>
+          value.asTag.fold(
+            SortedSet.empty[Tag[A]]
+          )(tag =>
+            SortedSet(tag)
+          )
+        ).toVector.sorted(Tag.creationDateOrderingInstance.reverse).take(n).map(tag =>
+          BinaryCheckVersion.fromTag(tag)
+        )
+      )
     )
 }

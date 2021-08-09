@@ -10,6 +10,7 @@ import sbt.Keys._
 import sbt._
 import scala.annotation.nowarn
 import scala.collection.immutable.SortedSet
+import sbt.internal.util.ManagedLogger
 
 object SbtVersionSchemeEnforcerPlugin extends AutoPlugin {
   override def trigger: PluginTrigger = allRequirements
@@ -36,13 +37,15 @@ object SbtVersionSchemeEnforcerPlugin extends AutoPlugin {
             value => Some(value)
           )
         )
-      },
-      versionSchemeEnforcerBinaryCheckInfo := {
-        val logger: String = streams.value.log
-        versionScheme.?.value.flatten.fold(
-          logger.error(s"versionScheme is not set, ")
-        )
       }
+      // versionSchemeEnforcerBinaryCheckInfo := {
+      //   val logger: ManagedLogger = streams.value.log
+      //   versionScheme.?.value.flatten.fold(
+      //     logger.error(s"versionScheme is not set, but it is required to use sbt-versions-scheme-enforcer-plugin.")
+      //   )(versionScheme =>
+
+      //   )
+      // }
     )
 
   override def buildSettings: Seq[Def.Setting[_]] =
