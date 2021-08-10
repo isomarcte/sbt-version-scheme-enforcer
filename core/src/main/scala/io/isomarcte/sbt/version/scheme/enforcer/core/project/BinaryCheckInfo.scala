@@ -55,14 +55,12 @@ object BinaryCheckInfo {
     override protected implicit def orderingB: Ordering[B] = _orderingB
   }
 
-  type BinaryCheckInfoV[A] = BinaryCheckInfo[BinaryCheckVersion[A], BinaryCheckVersion[Version]]
-
   def empty[A: Ordering, B: Ordering]: BinaryCheckInfo[A, B] = apply[A, B](BinaryChecks.empty[A], None)
 
   def apply[A, B](checks: BinaryChecks[A], invalidVersions: Option[Set[B]])(implicit A: Ordering[A], B: Ordering[B]): BinaryCheckInfo[A, B] =
     BinaryCheckInfoImpl(checks, invalidVersions.map(value => toSortedSet[B](value)), A, B)
 
-  def applyVersionScheme(versionScheme: VersionScheme, value: BinaryCheckInfoV[Version]): Either[String, BinaryCheckInfoV[versionScheme.VersionType]] = {
+  def applyVersionScheme(versionScheme: VersionScheme, value: SBTBinaryCheckInfoV[Version]): Either[String, SBTBinaryCheckInfoV[versionScheme.VersionType]] = {
     implicit val orderingInstance: Ordering[versionScheme.VersionType] = versionScheme.versionTypeOrderingInstance
     BinaryChecks.applyVersionScheme(versionScheme, value.checks).map(checks =>
       value.withChecks(checks)
