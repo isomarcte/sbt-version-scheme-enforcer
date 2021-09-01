@@ -1,7 +1,7 @@
 package io.isomarcte.sbt.version.scheme.enforcer.core.project
 
 import io.isomarcte.sbt.version.scheme.enforcer.core._
-import io.isomarcte.sbt.version.scheme.enforcer.core.internal.toSortedSet
+import io.isomarcte.sbt.version.scheme.enforcer.core.internal._
 import scala.collection.immutable.SortedSet
 
 sealed abstract class BinaryCheckInfo[A, B] extends Product with Serializable {
@@ -67,12 +67,12 @@ object BinaryCheckInfo {
     )
   }
 
-  def partitionFromSchemeAndProjectVersionInfo(versionScheme: VersionScheme)(projectVersionInfo: ProjectVersionInfo[Version]): Either[String, Option[BinaryCheckInfo[versionScheme.VersionType, BinaryCheckVersion[Version]]]] = {
+  def partitionFromSchemeAndProjectVersionInfo[F[_], A](versionScheme: VersionScheme)(projectVersionInfo: ProjectVersionInfo[F[A]])(implicit FA: VersionSchemableClass[F, A], F: Order1[F]): Either[String, Option[SBTBinaryCheckInfoV[F[versionScheme.VersionType]]]] = {
     implicit val orderingInstance: Ordering[versionScheme.VersionType] = versionScheme.versionTypeOrderingInstance
     implicit val versionChangeTypeClassInstance: VersionChangeTypeClass[versionScheme.VersionType] = versionScheme.versionTypeVersionChangeTypeClassInstance
     ProjectVersionInfo.applyVersionSchemeSplitTags(versionScheme, projectVersionInfo).map{
       case (projectVersionInfo, invalidVersions) =>
-        BinaryChecks.partitionFromProjectVersionInfo(projectVersionInfo).map(checks =>
+        BinaryChecks.partitionFromProjectVersionInfo[versionScheme.VersionType](projectVersionInfo).map(checks =>
           BinaryCheckInfo(checks, invalidVersions.map(value => value.map(tag => BinaryCheckVersion.fromTag[Version](tag))))
         )
     }

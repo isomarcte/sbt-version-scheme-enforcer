@@ -169,10 +169,10 @@ object BinaryChecks {
       BinaryChecks.partition(Tag(projectVersionInfo.currentVersion), tags).map(_.version)
     )
 
-  def mostRecentTagsOnly[A: Ordering: VersionChangeTypeClass](checks: BinaryChecksV[A]): BinaryChecksV[A] =
+  def mostRecentTagsOnly[A: Ordering: VersionChangeTypeClass](checks: SBTBinaryChecksV[A]): SBTBinaryChecksV[A] =
     mostRecentNTagsOnly(checks, 1)
 
-  def mostRecentNTagsOnly[A: Ordering: VersionChangeTypeClass](checks: BinaryChecksV[A], n: Int): BinaryChecksV[A] =
+  def mostRecentNTagsOnly[A: Ordering: VersionChangeTypeClass](checks: SBTBinaryChecksV[A], n: Int): SBTBinaryChecksV[A] =
     checks.mapChecks(value =>
       toSortedSet(
         value.flatMap(value =>

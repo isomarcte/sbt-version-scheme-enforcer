@@ -91,6 +91,23 @@ private[plugin] object SbtVersionSchemeEnforcer {
         )
       )
 
+  def validateVersionScheme(value: Option[String]): Either[String, VersionScheme] =
+    value.fold(
+      Left("versionScheme is not set, but is required to use sbt-version-scheme-enforcer-plugin."): Either[String, VersionScheme]
+    )(value =>
+      VersionScheme.fromCoursierVersionString(value).fold(
+        Left(s"Unknown versionScheme value: ${value}"): Either[String, VersionScheme]
+      )(value =>
+        Right(value)
+      )
+    )
+
+  def binaryCheckInfo(versionScheme: VersionScheme, currentVersion: Version, previousVersions: Option[SortedSet[BinaryCheckVersion[Version]]], initialVersion: Option[BinaryCheckVersion[Version]]): Either[String, BinaryCheckInfo[Version]] =
+    for {
+      currentVersion <- versionScheme.fromVersion(currentVersion)
+
+    }
+
   // def binaryCheckInfo(versionScheme: String, projectVersionInfo: ProjectVersionInfo[Version], previousVersions: Option[SortedSet[Version]], versionSetF: VersionSetFunctions.VersionSetF[Version]): Either[String, Option[BinaryCheckInfo[Version, Version]]] =
   //   if (projectVersionInfo.tags.isEmpty && previousVersions.isEmpty) {
   //     // Neither tags nor previousVersions were set, so we have no

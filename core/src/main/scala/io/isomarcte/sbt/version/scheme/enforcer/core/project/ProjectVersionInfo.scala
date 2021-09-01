@@ -3,7 +3,6 @@ package io.isomarcte.sbt.version.scheme.enforcer.core.project
 import io.isomarcte.sbt.version.scheme.enforcer.core._
 import io.isomarcte.sbt.version.scheme.enforcer.core.internal.toSortedSet
 import io.isomarcte.sbt.version.scheme.enforcer.core.internal.emapSortedSet
-import io.isomarcte.sbt.version.scheme.enforcer.core.vcs._
 import scala.collection.immutable.SortedSet
 
 sealed abstract class ProjectVersionInfo[A] extends Product with Serializable {
@@ -11,18 +10,18 @@ sealed abstract class ProjectVersionInfo[A] extends Product with Serializable {
 
   def currentVersion: A
   def initialVersion: Option[A]
-  def tags: Option[SortedSet[Tag[A]]]
+  def previousVersions: Option[SortedSet[BinaryCheckVersion[A]]]
 
   // final //
 
-  final def withTags(value: Option[Set[Tag[A]]]): ProjectVersionInfo[A] =
+  final def withPreviousVersions(value: Option[Set[BinaryCheckVersion[A]]]): ProjectVersionInfo[A] =
     ProjectVersionInfo(currentVersion, initialVersion, value.map(value => toSortedSet(value)))
 
-  final def mapTags(f: Option[Set[Tag[A]]] => Option[Set[Tag[A]]]): ProjectVersionInfo[A] =
-    withTags(f(tags))
+  final def mapPreviousVersions(f: Option[Set[BinaryCheckVersion[A]]] => Option[Set[BinaryCheckVersion[A]]]): ProjectVersionInfo[A] =
+    withPreviousVersions(f(previousVersions))
 
   final def map[B: Ordering](f: A => B): ProjectVersionInfo[B] =
-    ProjectVersionInfo(f(currentVersion), initialVersion.map(f), tags.map(_.map(_.map(f))))
+    ProjectVersionInfo(f(currentVersion), initialVersion.map(f), previousVersions.map(_.map(_.map(f))))
 
   final def emap[B: Ordering](f: A => Either[String, B]): Either[String, ProjectVersionInfo[B]] = {
     // poor man's traverse
@@ -32,11 +31,11 @@ sealed abstract class ProjectVersionInfo[A] extends Product with Serializable {
       )(a =>
         f(a).map(Option.apply _)
       )
-    val tse: Either[String, Option[SortedSet[Tag[B]]]] =
-      tags.fold(
-        Right(None): Either[String, Option[SortedSet[Tag[B]]]]
+    val tse: Either[String, Option[SortedSet[BinaryCheckVersion[B]]]] =
+      previousVersions.fold(
+        Right(None): Either[String, Option[SortedSet[BinaryCheckVersion[B]]]]
       )(value =>
-        emapSortedSet((t: Tag[A]) => t.emap(f))(value).map(Some(_))
+        emapSortedSet((t: BinaryCheckVersion[A]) => t.emap(f))(value).map(Some(_))
       )
     for {
       cv <- f(currentVersion)
@@ -46,16 +45,16 @@ sealed abstract class ProjectVersionInfo[A] extends Product with Serializable {
   }
 
   override final def toString: String =
-    s"ProjectVersionInfo(currentVersion = ${currentVersion}, initialVersion = ${initialVersion}, tags = ${tags})"
+    s"ProjectVersionInfo(currentVersion = ${currentVersion}, initialVersion = ${initialVersion}, previousVersions = ${previousVersions})"
 }
 
 object ProjectVersionInfo {
-  private[this] final case class ProjectVersionInfoImpl[A](override val currentVersion: A, override val initialVersion: Option[A], override val tags: Option[SortedSet[Tag[A]]], orderingA: Ordering[A]) extends ProjectVersionInfo[A] {
+  private[this] final case class ProjectVersionInfoImpl[A](override val currentVersion: A, override val initialVersion: Option[A], override val previousVersions: Option[SortedSet[BinaryCheckVersion[A]]], orderingA: Ordering[A]) extends ProjectVersionInfo[A] {
     override protected implicit val orderingInstance: Ordering[A] = orderingA
   }
 
-  def apply[A](currentVersion: A, initialVersion: Option[A], tags: Option[Set[Tag[A]]])(implicit A: Ordering[A]): ProjectVersionInfo[A] =
-    ProjectVersionInfoImpl(currentVersion, initialVersion, tags.map(tags => toSortedSet[Tag[A]](tags)), A)
+  def apply[A](currentVersion: A, initialVersion: Option[A], previousVersions: Option[Set[BinaryCheckVersion[A]]])(implicit A: Ordering[A]): ProjectVersionInfo[A] =
+    ProjectVersionInfoImpl(currentVersion, initialVersion, previousVersions.map(previousVersions => toSortedSet[BinaryCheckVersion[A]](previousVersions)), A)
   def applyVersionScheme(versionScheme: VersionScheme, projectInfo: ProjectVersionInfo[Version]): Either[String, ProjectVersionInfo[versionScheme.VersionType]] = {
     implicit val versionTypeOrderingInstance: Ordering[versionScheme.VersionType] =
       versionScheme.versionTypeOrderingInstance
@@ -64,24 +63,24 @@ object ProjectVersionInfo {
     )
   }
 
-  def applyVersionSchemeSplitTags(versionScheme: VersionScheme, projectInfo: ProjectVersionInfo[Version]): Either[String, (ProjectVersionInfo[versionScheme.VersionType], Option[SortedSet[Tag[Version]]])] = {
-    implicit val versionTypeOrderingInstance: Ordering[versionScheme.VersionType] =
-      versionScheme.versionTypeOrderingInstance
-    lazy val splitTags: Option[(SortedSet[Tag[versionScheme.VersionType]], SortedSet[Tag[Version]])] =
-      projectInfo.tags.map(_.foldLeft((SortedSet.empty, SortedSet.empty): (SortedSet[Tag[versionScheme.VersionType]], SortedSet[Tag[Version]])){
-        case ((valid, invalid), value) =>
-          value.emap(t => versionScheme.fromVersion(t)).fold(
-            _ => (valid, invalid ++ SortedSet(value)),
-            value => (valid ++ SortedSet(value), invalid)
-          )
-      }
-      )
+  // def applyVersionSchemeSplitTags[F[_], A](versionScheme: VersionScheme, projectInfo: ProjectVersionInfo[F[A]]): Either[String, (ProjectVersionInfo[F[versionScheme.VersionType]], Option[SortedSet[Tag[A]]])] = {
+  //   implicit val versionTypeOrderingInstance: Ordering[versionScheme.VersionType] =
+  //     versionScheme.versionTypeOrderingInstance
+  //   lazy val splitTags: Option[(SortedSet[Tag[versionScheme.VersionType]], SortedSet[Tag[A]])] =
+  //     projectInfo.tags.map(_.foldLeft((SortedSet.empty, SortedSet.empty): (SortedSet[Tag[versionScheme.VersionType]], SortedSet[Tag[Version]])){
+  //       case ((valid, invalid), value) =>
+  //         value.emap(t => versionScheme.fromVersion(t)).fold(
+  //           _ => (valid, invalid ++ SortedSet(value)),
+  //           value => (valid ++ SortedSet(value), invalid)
+  //         )
+  //     }
+  //     )
 
-    for {
-      cv <- versionScheme.fromVersion(projectInfo.currentVersion)
-      iv <- projectInfo.initialVersion.fold(Right(None): Either[String, Option[versionScheme.VersionType]])(value => versionScheme.fromVersion(value).map(Some(_)))
-    } yield (ProjectVersionInfo(cv, iv, splitTags.map(_._1)), splitTags.map(_._2))
-  }
+  //   for {
+  //     cv <- versionScheme.fromVersion(projectInfo.currentVersion)
+  //     iv <- projectInfo.initialVersion.fold(Right(None): Either[String, Option[versionScheme.VersionType]])(value => versionScheme.fromVersion(value).map(Some(_)))
+  //   } yield (ProjectVersionInfo(cv, iv, splitTags.map(_._1)), splitTags.map(_._2))
+  // }
 
   implicit def orderingInstance[A: Ordering]: Ordering[ProjectVersionInfo[A]] =
     new Ordering[ProjectVersionInfo[A]] {
@@ -93,6 +92,4 @@ object ProjectVersionInfo {
             otherwise
         }
     }
-
-
 }

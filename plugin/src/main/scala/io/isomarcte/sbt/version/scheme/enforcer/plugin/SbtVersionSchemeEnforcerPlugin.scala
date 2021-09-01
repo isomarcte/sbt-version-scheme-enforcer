@@ -25,27 +25,24 @@ object SbtVersionSchemeEnforcerPlugin extends AutoPlugin {
       versionSchemeEnforcerInitialVersion := None,
       versionSchemeEnforcerPreviousVersion := None,
       versionSchemeEnforcerTagDomain := TagDomain.All,
+      versionSchemeEnforcerDeriveFromVCS := true,
       versionSchemeEnforcerVCSTags := {
         val s: TaskStreams = streams.value
         val tagDomain: TagDomain =
           versionSchemeEnforcerTagDomain.value
-        VCS.determineVCSOption.fold(
-          Option.empty[SortedSet[Tag[Version]]]
-        )((vcs: VCS) =>
-          vcs.tags(tagDomain).fold(
-            e => {s.log.error(e.getLocalizedMessage); Option.empty[SortedSet[Tag[Version]]]},
-            value => Some(value)
+        if (versionSchemeEnforcerDeriveFromVCS.value) {
+          VCS.determineVCSOption.fold(
+            Option.empty[SortedSet[Tag[Version]]]
+          )((vcs: VCS) =>
+            vcs.tags(tagDomain).fold(
+              e => {s.log.error(e.getLocalizedMessage); Option.empty[SortedSet[Tag[Version]]]},
+              value => Some(value)
+            )
           )
-        )
+        } else {
+          None
+        }
       }
-      // versionSchemeEnforcerBinaryCheckInfo := {
-      //   val logger: ManagedLogger = streams.value.log
-      //   versionScheme.?.value.flatten.fold(
-      //     logger.error(s"versionScheme is not set, but it is required to use sbt-versions-scheme-enforcer-plugin.")
-      //   )(versionScheme =>
-
-      //   )
-      // }
     )
 
   override def buildSettings: Seq[Def.Setting[_]] =
@@ -82,6 +79,33 @@ object SbtVersionSchemeEnforcerPlugin extends AutoPlugin {
 
   override def projectSettings: Seq[Def.Setting[_]] =
     Seq(
+      versionSchemeEnforcerPreviousVersions := {
+        val previousVersion: Option[String] =
+          versionSchemeEnforcerPreviousVersion.?.value.flatten
+        val tags: Option[SortedSet[Tag[Version]]] =
+          versionSchemeEnforcerVCSTags.value
+        val current: Option[SortedSet[BinaryCheckVersion[Version]]] =
+          versionSchemeEnforcerPreviousVersions.?.value.flatten
+        type Result = BinaryCheckVersion[Version]
+
+        if (previousVersion.isDefined || tags.isDefined || current.isDefined) {
+          Some(previousVersion.map(value => SortedSet(BinaryCheckVersion.fromNonTag(Version(value)))).getOrElse(SortedSet.empty[Result]) ++
+          tags.map(_.map(value => BinaryCheckVersion.fromTag(value))).getOrElse(SortedSet.empty[Result]) ++
+          current.getOrElse(SortedSet.empty[Result]))
+        } else {
+          // None of the possible inputs for this are set, so None is returned
+          // to differentiate between set, but empty and non-set states.
+          None
+        }
+      },
+      versionSchemeEnforcerBinaryCheckInfo := {
+        val s: TaskStreams = streams.value
+        validateVersionScheme(versionScheme.value).flatMap{versionScheme =>
+          versionSchemeEnforcerPreviousVersions.value.fold(
+            SortedSet.empty[BinaryCheckVersion[]]
+          )
+        }
+      },
       versionSchemeEnforcerProjectVersionInfo := {
         val v: Version = Version(version.value)
         val iv: Option[Version] = versionSchemeEnforcerInitialVersion.value.map(Version.apply)

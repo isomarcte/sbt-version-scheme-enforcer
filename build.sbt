@@ -41,7 +41,7 @@ def initialImports(packages: List[String], isScala3: Boolean): String = {
 
 ThisBuild / versionScheme := Some("pvp")
 
-ThisBuild / scalacOptions ++= List("-target:jvm-1.8")
+ThisBuild / scalacOptions ++= List("-target:jvm-1.8", "-Wconf:cat=unused:info")
 
 ThisBuild / organization := isomarcteOrg
 ThisBuild / scalafixDependencies ++= List(organizeImportsG %% organizeImportsA % organizeImportsV)
