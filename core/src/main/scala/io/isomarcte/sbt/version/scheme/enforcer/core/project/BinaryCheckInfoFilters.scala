@@ -5,6 +5,7 @@ import io.isomarcte.sbt.version.scheme.enforcer.core._
 object BinaryCheckInfoFilters {
 
   def fromSchemedE(versionScheme: VersionScheme)(f: SBTBinaryCheckInfoFilterE[versionScheme.VersionType]): SBTBinaryCheckInfoFilterE[Version] =
+
     (projectVersionInfo: ProjectVersionInfo[Version]) => (binaryCheckInfo: SBTBinaryCheckInfoV[Version]) => {
       ProjectVersionInfo.applyVersionSchemeSplitTags(versionScheme, projectVersionInfo).flatMap{
         case (projectVersionInfo, _) =>

@@ -1,5 +1,6 @@
 package io.isomarcte.sbt.version.scheme.enforcer.core.project
 
+import io.isomarcte.sbt.version.scheme.enforcer.core.internal._
 import io.isomarcte.sbt.version.scheme.enforcer.core._
 import io.isomarcte.sbt.version.scheme.enforcer.core.internal.toSortedSet
 import io.isomarcte.sbt.version.scheme.enforcer.core.internal.emapSortedSet
@@ -55,6 +56,7 @@ object ProjectVersionInfo {
 
   def apply[A](currentVersion: A, initialVersion: Option[A], previousVersions: Option[Set[BinaryCheckVersion[A]]])(implicit A: Ordering[A]): ProjectVersionInfo[A] =
     ProjectVersionInfoImpl(currentVersion, initialVersion, previousVersions.map(previousVersions => toSortedSet[BinaryCheckVersion[A]](previousVersions)), A)
+
   def applyVersionScheme(versionScheme: VersionScheme, projectInfo: ProjectVersionInfo[Version]): Either[String, ProjectVersionInfo[versionScheme.VersionType]] = {
     implicit val versionTypeOrderingInstance: Ordering[versionScheme.VersionType] =
       versionScheme.versionTypeOrderingInstance
@@ -91,5 +93,15 @@ object ProjectVersionInfo {
           case otherwise =>
             otherwise
         }
+    }
+
+  implicit def versionSchemableClassInstance[F[_], A](implicit F: VersionSchemableClass[F, A], G: Order1[F]): VersionSchemableClass[Lambda[A => ProjectVersionInfo[F[A]]], A] =
+    new VersionSchemableClass[Lambda[A => ProjectVersionInfo[F[A]]], A] {
+      override def scheme(versionScheme: VersionScheme, value: ProjectVersionInfo[F[A]]): Either[String, ProjectVersionInfo[F[versionScheme.VersionType]]] =
+        for {
+          current <- F.scheme(versionScheme, value.currentVersion)
+          initial <- value.initialVersion.fold(Right(None): Either[String, Option[F[versionScheme.VersionType]]])(value => F.scheme(versionScheme, value).map(value => Some(value)))
+          previous <- value.previousVersions.fold(Right(None): Either[String, Option[SortedSet[F[versionScheme.VersionType]]]])(value => VersionSchemableClass[Lambda[A => SortedSet[F[A]]], A].scheme(versionScheme, value).map(Some(_)))
+        } yield ProjectVersionInfo(current, initial, previous)
     }
 }

@@ -70,4 +70,6 @@ object BinaryCheckVersion {
 
   implicit def versionChangeTypeClassInstance[A](implicit A: VersionChangeTypeClass[A]): VersionChangeTypeClass[BinaryCheckVersion[A]] =
     A.contramap(_.underlyingVersion)
+
+  implicit def versionSchemableClassInstance
 }
