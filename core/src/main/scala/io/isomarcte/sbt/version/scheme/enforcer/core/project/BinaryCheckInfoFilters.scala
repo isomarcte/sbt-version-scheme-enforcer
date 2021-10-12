@@ -1,21 +1,24 @@
 package io.isomarcte.sbt.version.scheme.enforcer.core.project
 
+import io.isomarcte.sbt.version.scheme.enforcer.core.project.syntax.all._
 import io.isomarcte.sbt.version.scheme.enforcer.core._
 
 object BinaryCheckInfoFilters {
 
   def fromSchemedE(versionScheme: VersionScheme)(f: SBTBinaryCheckInfoFilterE[versionScheme.VersionType]): SBTBinaryCheckInfoFilterE[Version] =
-
-    (projectVersionInfo: ProjectVersionInfo[Version]) => (binaryCheckInfo: SBTBinaryCheckInfoV[Version]) => {
-      ProjectVersionInfo.applyVersionSchemeSplitTags(versionScheme, projectVersionInfo).flatMap{
-        case (projectVersionInfo, _) =>
-          BinaryCheckInfo.applyVersionScheme(versionScheme, binaryCheckInfo).flatMap(binaryCheckInfo =>
-            f(projectVersionInfo)(binaryCheckInfo).map(
-              _.mapChecks(_.map(_.map(value => versionScheme.toVersion(value))))
-            )
-          )
-      }
+    {(projectVersionInfo: ProjectVersionInfo[Version]) =>
+      projectVersionInfo.scheme(versionScheme)
     }
+    // (projectVersionInfo: ProjectVersionInfo[Version]) => (binaryCheckInfo: SBTBinaryCheckInfoV[Version]) => {
+    //   ProjectVersionInfo.applyVersionSchemeSplitTags(versionScheme, projectVersionInfo).flatMap{
+    //     case (projectVersionInfo, _) =>
+    //       BinaryCheckInfo.applyVersionScheme(versionScheme, binaryCheckInfo).flatMap(binaryCheckInfo =>
+    //         f(projectVersionInfo)(binaryCheckInfo).map(
+    //           _.mapChecks(_.map(_.map(value => versionScheme.toVersion(value))))
+    //         )
+    //       )
+    //   }
+    // }
 
   def fromSchemed(versionScheme: VersionScheme)(f: SBTBinaryCheckInfoFilter[versionScheme.VersionType]): SBTBinaryCheckInfoFilterE[Version] =
     fromSchemedE(versionScheme)(projectVersionInfo => binaryCheckInfo => Right(f(projectVersionInfo)(binaryCheckInfo)))

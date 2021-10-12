@@ -95,13 +95,18 @@ object ProjectVersionInfo {
         }
     }
 
-  implicit def versionSchemableClassInstance[F[_], A](implicit F: VersionSchemableClass[F, A], G: Order1[F]): VersionSchemableClass[Lambda[A => ProjectVersionInfo[F[A]]], A] =
+  implicit def versionSchemableClassInstance1[F[_], A](implicit F: VersionSchemableClass[F, A], G: Order1[F]): VersionSchemableClass[Lambda[A => ProjectVersionInfo[F[A]]], A] = {
+    VersionSchemableClass.sortedSetInstance[Lambda[A => BinaryCheckVersion[F[A]]], A](BinaryCheckVersion.versionSchemableClassInstance[F, A], G)
     new VersionSchemableClass[Lambda[A => ProjectVersionInfo[F[A]]], A] {
       override def scheme(versionScheme: VersionScheme, value: ProjectVersionInfo[F[A]]): Either[String, ProjectVersionInfo[F[versionScheme.VersionType]]] =
         for {
           current <- F.scheme(versionScheme, value.currentVersion)
           initial <- value.initialVersion.fold(Right(None): Either[String, Option[F[versionScheme.VersionType]]])(value => F.scheme(versionScheme, value).map(value => Some(value)))
-          previous <- value.previousVersions.fold(Right(None): Either[String, Option[SortedSet[F[versionScheme.VersionType]]]])(value => VersionSchemableClass[Lambda[A => SortedSet[F[A]]], A].scheme(versionScheme, value).map(Some(_)))
+          previous <- value.previousVersions.fold(Right(None): Either[String, Option[SortedSet[F[versionScheme.VersionType]]]])(value => VersionSchemableClass[Lambda[A => SortedSet[BinaryCheckVersion[F[A]]]], A].scheme(versionScheme, value).map(Some(_)))
         } yield ProjectVersionInfo(current, initial, previous)
     }
+  }
+
+  implicit def versionSchemableClassInstance[A: VersionSchemableClass.VersionChangeTypeClassId]: VersionSchemableClass[ProjectVersionInfo, A] =
+    versionSchemableClassInstance1[Id, A]
 }

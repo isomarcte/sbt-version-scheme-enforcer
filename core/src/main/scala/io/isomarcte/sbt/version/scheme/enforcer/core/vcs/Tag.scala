@@ -93,16 +93,19 @@ object Tag {
   def toPVP(tag: Tag[Version]): Either[String, Tag[PVPVersion]] =
     tag.emap(PVPVersion.fromVersion)
 
-  implicit def orderingInstance[A: Ordering]: Ordering[Tag[A]] =
-    new Ordering[Tag[A]] {
-      override def compare(x: Tag[A], y: Tag[A]): Int =
-        Ordering[A].compare(x.version, y.version) match {
+  implicit val order1Instance: Order1[Tag] =
+    new Order1[Tag] {
+      override def liftCompare[A, B](compare: A => B => Int, x: Tag[A], y: Tag[B]): Int =
+        compare(x.version, y.version) match {
           case 0 =>
             Ordering[Option[OffsetDateTime]].compare(x.creationDate, y.creationDate)
           case otherwise =>
             otherwise
         }
     }
+
+  implicit def orderingInstance[A: Ordering]: Ordering[Tag[A]] =
+    Order1.orderingFromOrder1[Tag, A]
 
   def creationDateOrderingInstance[A: Ordering]: Ordering[Tag[A]] =
     new Ordering[Tag[A]] {

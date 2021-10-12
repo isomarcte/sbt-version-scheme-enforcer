@@ -42,4 +42,9 @@ object VersionSchemableClass {
       }
     }
   }
+
+  final class VersionSchemableClassOps[F[_], A](lhs: F[A])(implicit F: VersionSchemableClass[F, A]) {
+    final def scheme(versionScheme: VersionScheme): Either[String, F[versionScheme.VersionType]] =
+      F.scheme(versionScheme, lhs)
+  }
 }
