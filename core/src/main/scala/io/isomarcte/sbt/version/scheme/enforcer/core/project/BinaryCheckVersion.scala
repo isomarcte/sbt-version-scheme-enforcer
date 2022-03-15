@@ -1,6 +1,5 @@
 package io.isomarcte.sbt.version.scheme.enforcer.core.project
 
-import io.isomarcte.sbt.version.scheme.enforcer.core.project.internal._
 import io.isomarcte.sbt.version.scheme.enforcer.core.vcs._
 import io.isomarcte.sbt.version.scheme.enforcer.core._
 
@@ -48,7 +47,7 @@ object BinaryCheckVersion {
     value.emap(value => versionScheme.fromVersion(value))
 
   implicit val order1Instance: Order1[BinaryCheckVersion] =
-    new Order1 {
+    new Order1[BinaryCheckVersion] {
       override def liftCompare[A, B](compare: A => B => Int, x: BinaryCheckVersion[A], y: BinaryCheckVersion[B]): Int =
         (x.isTag, y.isTag) match {
           case (true, false) =>
@@ -60,27 +59,23 @@ object BinaryCheckVersion {
             // x and y are either both tags or both not tags
             x.asTag.flatMap(x =>
               y.asTag.map(y =>
-                compare(x)(y)
-                Ordering[Tag[A]].compare(x, y)
+                Order1[Tag].liftCompare(compare, x, y)
               )
             ).getOrElse(
               // x and y are both not tags
-              A.compare(x.underlyingVersion, y.underlyingVersion)
+              compare(x.underlyingVersion)(y.underlyingVersion)
             )
         }
     }
 
   implicit def orderingInstance[A](implicit A: Ordering[A]): Ordering[BinaryCheckVersion[A]] =
-    new Ordering[BinaryCheckVersion[A]] {
-      override def compare(x: BinaryCheckVersion[A], y: BinaryCheckVersion[A]): Int =
-
-    }
+    Order1.orderingFromOrder1
 
   implicit def versionChangeTypeClassInstance[A](implicit A: VersionChangeTypeClass[A]): VersionChangeTypeClass[BinaryCheckVersion[A]] =
     A.contramap(_.underlyingVersion)
 
-  implicit def versionSchemableClassInstance[F[_], A](implicit F: VersionSchemableClass[F, A]): VersionSchemableClass[Lambda[A => BinaryCheckVersion[F[A]]], A] =
-    new VersionSchemableClass[Lambda[A => BinaryCheckVersion[F[A]]], A] {
+  implicit def versionSchemableClassInstance[F[_], A](implicit F: VersionSchemableClass[F, A]): VersionSchemableClass[Lambda[B => BinaryCheckVersion[F[B]]], A] =
+    new VersionSchemableClass[Lambda[B => BinaryCheckVersion[F[B]]], A] {
       override def scheme(versionScheme: VersionScheme, value: BinaryCheckVersion[F[A]]): Either[String, BinaryCheckVersion[F[versionScheme.VersionType]]] =
         value.emap(value =>
           F.scheme(versionScheme, value)

@@ -1,5 +1,6 @@
 package io.isomarcte.sbt.version.scheme.enforcer.core.project
 
+import io.isomarcte.sbt.version.scheme.enforcer.core.project.syntax.all._
 import io.isomarcte.sbt.version.scheme.enforcer.core.internal._
 import io.isomarcte.sbt.version.scheme.enforcer.core._
 import io.isomarcte.sbt.version.scheme.enforcer.core.internal.toSortedSet
@@ -95,15 +96,17 @@ object ProjectVersionInfo {
         }
     }
 
-  implicit def versionSchemableClassInstance1[F[_], A](implicit F: VersionSchemableClass[F, A], G: Order1[F]): VersionSchemableClass[Lambda[A => ProjectVersionInfo[F[A]]], A] = {
-    VersionSchemableClass.sortedSetInstance[Lambda[A => BinaryCheckVersion[F[A]]], A](BinaryCheckVersion.versionSchemableClassInstance[F, A], G)
-    new VersionSchemableClass[Lambda[A => ProjectVersionInfo[F[A]]], A] {
-      override def scheme(versionScheme: VersionScheme, value: ProjectVersionInfo[F[A]]): Either[String, ProjectVersionInfo[F[versionScheme.VersionType]]] =
+  implicit def versionSchemableClassInstance1[F[_], A](implicit F: VersionSchemableClass[F, A], G: Order1[F]): VersionSchemableClass[Lambda[B => ProjectVersionInfo[F[B]]], A] = {
+    val sortedSetInstance = VersionSchemableClass.sortedSetInstance[Lambda[B => BinaryCheckVersion[F[B]]], A]
+    new VersionSchemableClass[Lambda[B => ProjectVersionInfo[F[B]]], A] {
+      override def scheme(versionScheme: VersionScheme, value: ProjectVersionInfo[F[A]]): Either[String, ProjectVersionInfo[F[versionScheme.VersionType]]] = {
+        implicit val versionTypeOrderingF: Ordering[F[versionScheme.VersionType]] = Order1.orderingFromOrder1(G, versionScheme.versionTypeOrderingInstance)
         for {
           current <- F.scheme(versionScheme, value.currentVersion)
           initial <- value.initialVersion.fold(Right(None): Either[String, Option[F[versionScheme.VersionType]]])(value => F.scheme(versionScheme, value).map(value => Some(value)))
-          previous <- value.previousVersions.fold(Right(None): Either[String, Option[SortedSet[F[versionScheme.VersionType]]]])(value => VersionSchemableClass[Lambda[A => SortedSet[BinaryCheckVersion[F[A]]]], A].scheme(versionScheme, value).map(Some(_)))
+          previous <- value.previousVersions.fold(Right(None): Either[String, Option[SortedSet[BinaryCheckVersion[F[versionScheme.VersionType]]]]])(value => sortedSetInstance.scheme(versionScheme, value).map((value: SortedSet[BinaryCheckVersion[F[versionScheme.VersionType]]]) => Some(value)))
         } yield ProjectVersionInfo(current, initial, previous)
+    }
     }
   }
 

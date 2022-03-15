@@ -20,8 +20,8 @@ object VersionSchemableClass {
         versionScheme.fromVersion(value)
     }
 
-  implicit def vectorInstance[F[_], A](implicit F: VersionSchemableClass[F, A]): VersionSchemableClass[Lambda[A => Vector[F[A]]], A] =
-    new VersionSchemableClass[Lambda[A => Vector[F[A]]], A] {
+  implicit def vectorInstance[F[_], A](implicit F: VersionSchemableClass[F, A]): VersionSchemableClass[Lambda[B => Vector[F[B]]], A] =
+    new VersionSchemableClass[Lambda[B => Vector[F[B]]], A] {
       override def scheme(versionScheme: VersionScheme, value: Vector[F[A]]): Either[String,Vector[F[versionScheme.VersionType]]] =
         value.foldLeft(Right(Vector.empty): Either[String, Vector[F[versionScheme.VersionType]]]){
           case (acc, value) =>
@@ -33,8 +33,8 @@ object VersionSchemableClass {
         }
     }
 
-  implicit def sortedSetInstance[F[_], A](implicit F: VersionSchemableClass[F, A], G: Order1[F]): VersionSchemableClass[Lambda[A => SortedSet[F[A]]], A] = {
-    new VersionSchemableClass[Lambda[A => SortedSet[F[A]]], A] {
+  implicit def sortedSetInstance[F[_], A](implicit F: VersionSchemableClass[F, A], G: Order1[F]): VersionSchemableClass[Lambda[B => SortedSet[F[B]]], A] = {
+    new VersionSchemableClass[Lambda[B => SortedSet[F[B]]], A] {
       override def scheme(versionScheme: VersionScheme, value: SortedSet[F[A]]): Either[String,SortedSet[F[versionScheme.VersionType]]] = {
         implicit val versionTypeOrderingInstance: Ordering[versionScheme.VersionType] = versionScheme.versionTypeOrderingInstance
         implicit val orderingInstance: Ordering[F[versionScheme.VersionType]] = Order1.orderingFromOrder1[F, versionScheme.VersionType]

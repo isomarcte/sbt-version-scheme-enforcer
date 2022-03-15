@@ -96,7 +96,7 @@ object Tag {
   implicit val order1Instance: Order1[Tag] =
     new Order1[Tag] {
       override def liftCompare[A, B](compare: A => B => Int, x: Tag[A], y: Tag[B]): Int =
-        compare(x.version, y.version) match {
+        compare(x.version)(y.version) match {
           case 0 =>
             Ordering[Option[OffsetDateTime]].compare(x.creationDate, y.creationDate)
           case otherwise =>

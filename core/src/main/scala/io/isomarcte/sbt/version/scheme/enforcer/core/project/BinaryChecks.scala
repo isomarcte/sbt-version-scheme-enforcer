@@ -164,10 +164,21 @@ object BinaryChecks {
         }
     }
 
-  def partitionFromProjectVersionInfo[A: Ordering: VersionChangeTypeClass](projectVersionInfo: ProjectVersionInfo[A]): Option[BinaryChecks[A]] =
-    projectVersionInfo.tags.map(tags =>
-      BinaryChecks.partition(Tag(projectVersionInfo.currentVersion), tags).map(_.version)
-    )
+  def fromProjectVersionInfo[A: Ordering: VersionChangeTypeClass](projectVersionInfo: ProjectVersionInfo[A]): BinaryChecks[BinaryCheckVersion[A]] = {
+    val ordering = Ordering[BinaryCheckVersion[A]]
+    import ordering.mkOrderingOps
+    val previous: SortedSet[BinaryCheckVersion[A]] =
+      projectVersionInfo.previousVersions.fold(
+        SortedSet.empty[BinaryCheckVersion[A]]
+      )(previous =>
+        projectVersionInfo.initialVersion.fold(
+          previous
+        )(initialVersion =>
+          previous.filter(_ >= BinaryCheckVersion.fromNonTag(initialVersion))
+        )
+      )
+    partition(BinaryCheckVersion.fromNonTag(projectVersionInfo.currentVersion), previous)
+  }
 
   def mostRecentTagsOnly[A: Ordering: VersionChangeTypeClass](checks: SBTBinaryChecksV[A]): SBTBinaryChecksV[A] =
     mostRecentNTagsOnly(checks, 1)

@@ -60,13 +60,6 @@ object BinaryCheckInfo {
   def apply[A, B](checks: BinaryChecks[A], invalidVersions: Option[Set[B]])(implicit A: Ordering[A], B: Ordering[B]): BinaryCheckInfo[A, B] =
     BinaryCheckInfoImpl(checks, invalidVersions.map(value => toSortedSet[B](value)), A, B)
 
-  def applyVersionScheme(versionScheme: VersionScheme, value: SBTBinaryCheckInfoV[Version]): Either[String, SBTBinaryCheckInfoV[versionScheme.VersionType]] = {
-    implicit val orderingInstance: Ordering[versionScheme.VersionType] = versionScheme.versionTypeOrderingInstance
-    BinaryChecks.applyVersionScheme(versionScheme, value.checks).map(checks =>
-      value.withChecks(checks)
-    )
-  }
-
   // def partitionFromSchemeAndProjectVersionInfo[F[_], A](versionScheme: VersionScheme)(projectVersionInfo: ProjectVersionInfo[F[A]])(implicit FA: VersionSchemableClass[F, A], F: Order1[F]): Either[String, Option[SBTBinaryCheckInfoV[F[versionScheme.VersionType]]]] = {
   //   implicit val orderingInstance: Ordering[versionScheme.VersionType] = versionScheme.versionTypeOrderingInstance
   //   implicit val versionChangeTypeClassInstance: VersionChangeTypeClass[versionScheme.VersionType] = versionScheme.versionTypeVersionChangeTypeClassInstance
