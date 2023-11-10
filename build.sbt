@@ -29,7 +29,6 @@ ThisBuild / versionScheme := Some("pvp")
 ThisBuild / scalacOptions ++= List("-target:jvm-1.8")
 
 ThisBuild / organization := isomarcteOrg
-ThisBuild / scalafixDependencies ++= List(organizeImportsG %% organizeImportsA % organizeImportsV)
 ThisBuild / scalafixScalaBinaryVersion := scalaBinaryVersion.value
 ThisBuild / semanticdbEnabled := true
 ThisBuild / semanticdbVersion := scalafixSemanticdb.revision
@@ -45,7 +44,8 @@ ThisBuild / testFrameworks += new TestFramework("munit.Framework")
 
 ThisBuild / githubWorkflowPublishTargetBranches := Nil
 ThisBuild / githubWorkflowOSes := Set("macos-latest", "ubuntu-latest").toList
-ThisBuild / githubWorkflowJavaVersions := Set("adopt@1.11", "adopt@1.16", "adopt@1.8").toList
+ThisBuild / githubWorkflowJavaVersions :=
+  Set(JavaSpec.temurin("1.11"), JavaSpec.temurin("1.16"), JavaSpec.temurin("1.8"), JavaSpec.temurin("1.21")).toSeq
 ThisBuild / githubWorkflowBuildPreamble :=
   List(
     WorkflowStep.Sbt(List("scalafmtSbtCheck", "scalafmtCheckAll", "versionSchemeEnforcerCheck")),

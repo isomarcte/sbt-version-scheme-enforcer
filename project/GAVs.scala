@@ -6,7 +6,6 @@ object GAVs {
 
   lazy val betterMonadicForG: String = "com.olegpy"
   lazy val coursierG: String         = "io.get-coursier"
-  lazy val organizeImportsG          = "com.github.liancheng"
   lazy val scalaSbtG: String         = "org.scala-sbt"
   lazy val scalacheckG: String       = "org.scalacheck"
   lazy val scalametaG: String        = "org.scalameta"
@@ -23,7 +22,6 @@ object GAVs {
   lazy val disciplineMunitA: String          = "discipline-munit"
   lazy val kindProjectorA: String            = "kind-projector"
   lazy val munitA: String                    = "munit"
-  lazy val organizeImportsA: String          = "organize-imports"
   lazy val sbtA: String                      = "sbt"
   lazy val sbtCollectionsA: String           = "collections"
   lazy val sbtCoreMacrosA: String            = "core-macros"
@@ -38,13 +36,12 @@ object GAVs {
   // Versions //
 
   lazy val betterMonadicForV: String = "0.3.1"
-  lazy val catsV: String             = "2.6.1"
-  lazy val coursierVersionsV: String = "0.3.1"
+  lazy val catsV: String             = "2.10.0"
+  lazy val coursierVersionsV: String = "0.3.2"
   lazy val disciplineMunitV: String  = "1.0.9"
   lazy val kindProjectorV: String    = "0.13.2"
-  lazy val munitV: String            = "0.7.27"
-  lazy val organizeImportsV          = "0.4.4"
-  lazy val sbtLibraryManagementCoreV = "1.5.2"
+  lazy val munitV: String            = "0.7.29"
+  lazy val sbtLibraryManagementCoreV = "1.9.3"
   lazy val sbtMimaPluginV: String    = "1.1.3"
   lazy val scalacheckV: String       = "1.15.4"
 }

@@ -22,48 +22,67 @@ jobs:
     strategy:
       matrix:
         os: [macos-latest, ubuntu-latest]
-        scala: [2.12.14]
-        java: [adopt@1.11, adopt@1.16, adopt@1.8]
+        scala: [2.12.18]
+        java:
+          - temurin@1.11
+          - temurin@1.16
+          - temurin@1.8
+          - temurin@1.21
     runs-on: ${{ matrix.os }}
     steps:
       - name: Checkout current branch (full)
-        uses: actions/checkout@v2
+        uses: actions/checkout@v4
         with:
           fetch-depth: 0
 
-      - name: Setup Java and Scala
-        uses: olafurpg/setup-scala@v12
+      - name: Setup Java (temurin@1.11)
+        if: matrix.java == 'temurin@1.11'
+        uses: actions/setup-java@v3
         with:
-          java-version: ${{ matrix.java }}
+          distribution: temurin
+          java-version: 1.11
+          cache: sbt
 
-      - name: Cache sbt
-        uses: actions/cache@v2
+      - name: Setup Java (temurin@1.16)
+        if: matrix.java == 'temurin@1.16'
+        uses: actions/setup-java@v3
         with:
-          path: |
-            ~/.sbt
-            ~/.ivy2/cache
-            ~/.coursier/cache/v1
-            ~/.cache/coursier/v1
-            ~/AppData/Local/Coursier/Cache/v1
-            ~/Library/Caches/Coursier/v1
-          key: ${{ runner.os }}-sbt-cache-v2-${{ hashFiles('**/*.sbt') }}-${{ hashFiles('project/build.properties') }}
+          distribution: temurin
+          java-version: 1.16
+          cache: sbt
 
-      - run: sbt --client '++${{ matrix.scala }}; scalafmtSbtCheck; scalafmtCheckAll; versionSchemeEnforcerCheck'
+      - name: Setup Java (temurin@1.8)
+        if: matrix.java == 'temurin@1.8'
+        uses: actions/setup-java@v3
+        with:
+          distribution: temurin
+          java-version: 1.8
+          cache: sbt
+
+      - name: Setup Java (temurin@1.21)
+        if: matrix.java == 'temurin@1.21'
+        uses: actions/setup-java@v3
+        with:
+          distribution: temurin
+          java-version: 1.21
+          cache: sbt
+
+      - run: sbt '++ ${{ matrix.scala }}' scalafmtSbtCheck scalafmtCheckAll versionSchemeEnforcerCheck
 
       - run: sbt 'scalafixAll --check'
 
-      - run: sbt --client '++${{ matrix.scala }}; publishLocal'
+      - run: sbt '++ ${{ matrix.scala }}' publishLocal
 
       - run: |
           sbt scripted
           ./run-vcs-tests.sh
 
-      - run: sbt --client '++${{ matrix.scala }}; doc'
+      - run: sbt '++ ${{ matrix.scala }}' doc
 
       - name: Check that workflows are up to date
-        run: sbt --client '++${{ matrix.scala }}; githubWorkflowCheck'
+        run: sbt '++ ${{ matrix.scala }}' githubWorkflowCheck
 
       - name: Build project
-        run: sbt --client '++${{ matrix.scala }}; test'
+        run: sbt '++ ${{ matrix.scala }}' test
 
-      - run: 'sbt --client ''++${{ matrix.scala }}; test:doc'''
+      - run: 'sbt ''++ ${{ matrix.scala }}'' test:doc'
