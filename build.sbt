@@ -9,7 +9,7 @@ lazy val isomarcteOrg: String       = "io.isomarcte"
 lazy val jreVersionForDocs: String  = JREMajorVersion.majorVersion
 lazy val projectName: String        = "sbt-version-scheme-enforcer"
 lazy val projectUrl: URL            = url("https://github.com/isomarcte/sbt-version-scheme-enforcer")
-lazy val scala212: String           = "2.12.14"
+lazy val scala212: String           = "2.12.18"
 lazy val scalaVersions: Set[String] = Set(scala212)
 
 // SBT Command Aliases //
@@ -29,7 +29,6 @@ ThisBuild / versionScheme := Some("pvp")
 ThisBuild / scalacOptions ++= List("-target:jvm-1.8")
 
 ThisBuild / organization := isomarcteOrg
-ThisBuild / scalafixDependencies ++= List(organizeImportsG %% organizeImportsA % organizeImportsV)
 ThisBuild / scalafixScalaBinaryVersion := scalaBinaryVersion.value
 ThisBuild / semanticdbEnabled := true
 ThisBuild / semanticdbVersion := scalafixSemanticdb.revision
@@ -44,8 +43,9 @@ ThisBuild / testFrameworks += new TestFramework("munit.Framework")
 // GithubWorkflow
 
 ThisBuild / githubWorkflowPublishTargetBranches := Nil
-ThisBuild / githubWorkflowOSes := Set("macos-latest", "ubuntu-latest").toList
-ThisBuild / githubWorkflowJavaVersions := Set("adopt@1.11", "adopt@1.16", "adopt@1.8").toList
+ThisBuild / githubWorkflowOSes := Set("ubuntu-latest", "macos-latest").toList
+ThisBuild / githubWorkflowJavaVersions :=
+  Set(JavaSpec.temurin("11"), JavaSpec.temurin("16"), JavaSpec.temurin("8"), JavaSpec.temurin("21")).toSeq
 ThisBuild / githubWorkflowBuildPreamble :=
   List(
     WorkflowStep.Sbt(List("scalafmtSbtCheck", "scalafmtCheckAll", "versionSchemeEnforcerCheck")),
