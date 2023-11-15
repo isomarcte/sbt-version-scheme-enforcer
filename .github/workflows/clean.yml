@@ -12,7 +12,7 @@ on: push
 jobs:
   delete-artifacts:
     name: Delete Artifacts
-    runs-on: macos-latest
+    runs-on: ubuntu-latest
     env:
       GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
     steps:

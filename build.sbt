@@ -43,9 +43,9 @@ ThisBuild / testFrameworks += new TestFramework("munit.Framework")
 // GithubWorkflow
 
 ThisBuild / githubWorkflowPublishTargetBranches := Nil
-ThisBuild / githubWorkflowOSes := Set("macos-latest", "ubuntu-latest").toList
+ThisBuild / githubWorkflowOSes := Set("ubuntu-latest", "macos-latest").toList
 ThisBuild / githubWorkflowJavaVersions :=
-  Set(JavaSpec.temurin("1.11"), JavaSpec.temurin("1.16"), JavaSpec.temurin("1.8"), JavaSpec.temurin("1.21")).toSeq
+  Set(JavaSpec.temurin("11"), JavaSpec.temurin("16"), JavaSpec.temurin("8"), JavaSpec.temurin("21")).toSeq
 ThisBuild / githubWorkflowBuildPreamble :=
   List(
     WorkflowStep.Sbt(List("scalafmtSbtCheck", "scalafmtCheckAll", "versionSchemeEnforcerCheck")),
