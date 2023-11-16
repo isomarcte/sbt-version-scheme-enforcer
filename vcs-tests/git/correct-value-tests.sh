@@ -125,6 +125,14 @@ git tag -m "" '0.0.0.3-M2'
 
 check_result 'Some(0.0.0.3-M2)'
 
+# Tag transform test
+
+add_commit
+
+git tag -m "" 'v0.0.0.3-M3'
+
+check_result 'Some(0.0.0.3-M3)'
+
 ## Enable tag filtering of milestones
 
 echo 'ThisBuild / versionSchemeEnforcerPreviousVCSTagFilter := _root_.io.isomarcte.sbt.version.scheme.enforcer.plugin.TagFilters.noMilestoneTagFilter' > tag-filter.sbt
@@ -150,15 +158,6 @@ git tag -m "" '0.0.0.4'
 check_result 'Some(0.0.0.4)'
 
 git checkout branchA
-
-# Tag transform test
-
-add_commit
-
-git tag -m "" 'v0.0.0.3'
-
-check_result 'Some(0.0.0.3)'
-
 
 # Default domain is TagDomain.All, so we should see 0.0.0.4 here.
 
