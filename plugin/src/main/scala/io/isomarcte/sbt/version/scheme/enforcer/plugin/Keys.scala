@@ -46,7 +46,7 @@ trait Keys {
 
   final val versionSchemeEnforcerPreviousVCSTagStringTransformer: SettingKey[String => String] =
     settingKey[String => String](
-        "This setting operates only on the String representation of a VCS Tag and allows transforming that string."
+      "This setting operates only on the String representation of a VCS Tag and allows transforming that string."
     )
 
   final val versionSchemeEnforcerTagDomain: SettingKey[TagDomain] = settingKey[TagDomain](
