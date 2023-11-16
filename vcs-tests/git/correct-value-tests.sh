@@ -99,7 +99,7 @@ rm initial.sbt
 
 # One tag, no new commits
 
-git tag '0.0.0.1' @
+git tag -m "" '0.0.0.1' @
 
 check_result 'Some(0.0.0.1)'
 
@@ -107,7 +107,7 @@ check_result 'Some(0.0.0.1)'
 
 add_commit
 
-git tag '0.0.0.2' @
+git tag -m "" '0.0.0.2' @
 
 check_result 'Some(0.0.0.2)'
 
@@ -115,13 +115,13 @@ check_result 'Some(0.0.0.2)'
 
 add_commit
 
-git tag '0.0.0.3-M1'
+git tag -m "" '0.0.0.3-M1'
 
 check_result 'Some(0.0.0.3-M1)'
 
 add_commit
 
-git tag '0.0.0.3-M2'
+git tag -m "" '0.0.0.3-M2'
 
 check_result 'Some(0.0.0.3-M2)'
 
@@ -145,7 +145,7 @@ git checkout branchB
 
 add_commit
 
-git tag '0.0.0.4'
+git tag -m "" '0.0.0.4'
 
 check_result 'Some(0.0.0.4)'
 
@@ -155,7 +155,7 @@ git checkout branchA
 
 add_commit
 
-git tag 'v0.0.0.3'
+git tag -m "" 'v0.0.0.3'
 
 check_result 'Some(0.0.0.3)'
 
