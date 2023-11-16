@@ -151,6 +151,15 @@ check_result 'Some(0.0.0.4)'
 
 git checkout branchA
 
+# Tag transform test
+
+add_commit
+
+git tag 'v0.0.0.3'
+
+check_result 'Some(0.0.0.3)'
+
+
 # Default domain is TagDomain.All, so we should see 0.0.0.4 here.
 
 check_result 'Some(0.0.0.4)'
