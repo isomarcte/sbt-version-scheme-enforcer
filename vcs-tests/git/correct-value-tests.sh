@@ -103,7 +103,15 @@ git tag -m "" '0.0.0.1' @
 
 check_result 'Some(0.0.0.1)'
 
-# Two tags, should only find the most recent one
+# Tag transform test
+
+add_commit
+
+git tag -m "" 'v0.0.0.2-M1'
+
+check_result 'Some(0.0.0.2-M1)'
+
+# Two or more tags, should only find the most recent one
 
 add_commit
 
@@ -124,14 +132,6 @@ add_commit
 git tag -m "" '0.0.0.3-M2'
 
 check_result 'Some(0.0.0.3-M2)'
-
-# Tag transform test
-
-add_commit
-
-git tag -m "" 'v0.0.0.3-M3'
-
-check_result 'Some(0.0.0.3-M3)'
 
 ## Enable tag filtering of milestones
 
