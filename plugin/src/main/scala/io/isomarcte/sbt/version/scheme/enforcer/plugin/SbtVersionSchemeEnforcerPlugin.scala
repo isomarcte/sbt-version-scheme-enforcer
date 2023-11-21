@@ -159,6 +159,7 @@ object SbtVersionSchemeEnforcerPlugin extends AutoPlugin {
         }
       },
       MimaKeys.mimaPreviousArtifacts := {
+        val isSbtPlugin = sbtPlugin.value
         val shouldRun: Boolean = isAfterInitial(
           versionSchemeEnforcerInitialVersion.value,
           version.value,
@@ -168,7 +169,21 @@ object SbtVersionSchemeEnforcerPlugin extends AutoPlugin {
         if (shouldRun && currentValue.isEmpty && (Compile / publishArtifact).value) {
           versionSchemeEnforcerPreviousVersion
             .value
-            .fold(currentValue)(previousVersion => Set(organization.value %% moduleName.value % previousVersion))
+            .fold(currentValue) { previousVersion =>
+              val module = organization.value %% moduleName.value % previousVersion
+              Set(
+                if (isSbtPlugin)
+                  sbt
+                    .Defaults
+                    .sbtPluginExtra(
+                      module,
+                      (pluginCrossBuild / sbtBinaryVersion).value,
+                      (update / scalaBinaryVersion).value
+                    )
+                else
+                  module
+              )
+            }
         } else {
           currentValue
         }
