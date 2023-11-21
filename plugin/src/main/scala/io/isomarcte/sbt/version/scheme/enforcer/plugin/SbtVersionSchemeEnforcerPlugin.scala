@@ -53,7 +53,16 @@ object SbtVersionSchemeEnforcerPlugin extends AutoPlugin {
                   .flatMap(_.lastOption)
                   .fold(initialValue)(previousTag => Some(previousTag.value))
             )
+            .map(versionSchemeEnforcerPreviousVCSTagStringTransformer.value)
         }
+      },
+      versionSchemeEnforcerPreviousVCSTagStringTransformer := {
+        versionSchemeEnforcerPreviousVCSTagStringTransformer
+          .?
+          .value
+          .getOrElse {
+            _.stripPrefix("v").stripPrefix("V")
+          }
       }
     )
 
