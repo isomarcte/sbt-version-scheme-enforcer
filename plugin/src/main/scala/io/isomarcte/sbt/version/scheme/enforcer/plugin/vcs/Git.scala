@@ -43,7 +43,8 @@ private[plugin] object Git {
             "--no-pager",
             "tag",
             "--format=%(refname:strip=2) %(creatordate:iso-strict)",
-            "--sort=-creatordate"
+            "--sort=-creatordate",
+            "--merged",
           ) ++ domainToArgSeq(domain)
         )
         .lineStream(VCS.silentProcessLogger)
