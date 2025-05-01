@@ -44,7 +44,7 @@ private[plugin] object Git {
             "tag",
             "--format=%(refname:strip=2) %(creatordate:iso-strict)",
             "--sort=-creatordate",
-            "--merged",
+            "--merged"
           ) ++ domainToArgSeq(domain)
         )
         .lineStream(VCS.silentProcessLogger)
