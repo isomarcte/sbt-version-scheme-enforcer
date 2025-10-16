@@ -19,7 +19,23 @@ sealed trait SchemedVersion extends Ordered[SchemedVersion] {
         // versions to the same length, but PVP explicitly says that versions
         // must be in strict lexicographic order, which implies that 1.0.0
         // < 1.0.0.0 _not_ equal.
-        this.version.repr.compareTo(that.version.repr)
+        val thisChunks    = this.version.repr.split('.')
+        val thatChunks    = that.version.repr.split('.')
+        val stringCompare = this.version.repr.compareTo(that.version.repr)
+        if (thisChunks.size == thatChunks.size) {
+          Try {
+            thisChunks zip
+              thatChunks
+                .map { case (first, second) =>
+                  first.toInt.compareTo(second.toInt)
+                }
+                .dropWhile(_ == 0)
+                .headOption
+                .getOrElse(0)
+          }
+        }.toOption.getOrElse(stringCompare)
+        else
+          stringCompare
       case _ =>
         this.version.compare(that.version)
     }
