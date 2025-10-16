@@ -2,7 +2,8 @@ package io.isomarcte.sbt.version.scheme.enforcer.core
 
 import coursier.version._
 import coursier.version.{Version => CVersion}
-import scala.util.{Try, Success}
+import scala.util.{Success, Try}
+
 /** A wrapper type for [[coursier.version.Version]] which properly handles PVP
   * ordering. As of io.get-coursier:versions_2.12:0.3.0 does not.
   */
@@ -23,17 +24,18 @@ sealed trait SchemedVersion extends Ordered[SchemedVersion] {
         val thatChunks    = that.version.repr.split('.')
         val stringCompare = this.version.repr.compareTo(that.version.repr)
         if (thisChunks.size == thatChunks.size)
-            (thisChunks zip
-              thatChunks)
-                .map { case (first, second) =>
-                  Try(first.toInt.compareTo(second.toInt)) match {
-                  case Success(value) => value
-                  case _ => first.compareTo(second)
-                  }
-                }
-                .dropWhile(_ == 0)
-                .headOption
-                .getOrElse(0)
+          (thisChunks zip thatChunks)
+            .map { case (first, second) =>
+              Try(first.toInt.compareTo(second.toInt)) match {
+                case Success(value) =>
+                  value
+                case _ =>
+                  first.compareTo(second)
+              }
+            }
+            .dropWhile(_ == 0)
+            .headOption
+            .getOrElse(0)
         else
           stringCompare
       case _ =>
