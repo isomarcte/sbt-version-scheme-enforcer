@@ -1,7 +1,7 @@
 package io.isomarcte.sbt.version.scheme.enforcer.core
 
-import munit._
 import coursier.version._
+import munit._
 
 final class SchemedVersionTests extends FunSuite {
   test("SchemedVersionTests compare") {
