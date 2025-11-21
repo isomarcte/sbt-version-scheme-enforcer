@@ -2,6 +2,9 @@ package io.isomarcte.sbt.version.scheme.enforcer.core
 
 import coursier.version._
 import coursier.version.{Version => CVersion}
+import io.isomarcte.sbt.version.scheme.enforcer.core.SafeEquals._
+import scala.util.Success
+import scala.util.Try
 
 /** A wrapper type for [[coursier.version.Version]] which properly handles PVP
   * ordering. As of io.get-coursier:versions_2.12:0.3.0 does not.
@@ -19,7 +22,24 @@ sealed trait SchemedVersion extends Ordered[SchemedVersion] {
         // versions to the same length, but PVP explicitly says that versions
         // must be in strict lexicographic order, which implies that 1.0.0
         // < 1.0.0.0 _not_ equal.
-        this.version.repr.compareTo(that.version.repr)
+        val thisChunks    = this.version.repr.split('.')
+        val thatChunks    = that.version.repr.split('.')
+        val stringCompare = this.version.repr.compareTo(that.version.repr)
+        if (thisChunks.size === thatChunks.size)
+          (thisChunks zip thatChunks)
+            .map { case (first, second) =>
+              Try(first.toInt.compareTo(second.toInt)) match {
+                case Success(value) =>
+                  value
+                case _ =>
+                  first.compareTo(second)
+              }
+            }
+            .dropWhile(_ === 0)
+            .headOption
+            .getOrElse(0)
+        else
+          stringCompare
       case _ =>
         this.version.compare(that.version)
     }
