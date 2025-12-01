@@ -36,12 +36,12 @@ object GAVs {
   // Versions //
 
   lazy val betterMonadicForV: String = "0.3.1"
-  lazy val catsV: String             = "2.10.0"
+  lazy val catsV: String             = "2.13.0"
   lazy val coursierVersionsV: String = "0.3.2"
-  lazy val disciplineMunitV: String  = "1.0.9"
-  lazy val kindProjectorV: String    = "0.13.2"
-  lazy val munitV: String            = "0.7.29"
-  lazy val sbtLibraryManagementCoreV = "1.9.3"
-  lazy val sbtMimaPluginV: String    = "1.1.3"
-  lazy val scalacheckV: String       = "1.15.4"
+  lazy val disciplineMunitV: String  = "2.0.0"
+  lazy val kindProjectorV: String    = "0.13.4"
+  lazy val munitV: String            = "1.2.1"
+  lazy val sbtLibraryManagementCoreV = "1.11.6"
+  lazy val sbtMimaPluginV: String    = "1.1.4"
+  lazy val scalacheckV: String       = "1.19.0"
 }

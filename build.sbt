@@ -29,7 +29,6 @@ ThisBuild / versionScheme := Some("pvp")
 ThisBuild / scalacOptions ++= List("-target:jvm-1.8")
 
 ThisBuild / organization := isomarcteOrg
-ThisBuild / scalafixScalaBinaryVersion := scalaBinaryVersion.value
 ThisBuild / semanticdbEnabled := true
 ThisBuild / semanticdbVersion := scalafixSemanticdb.revision
 // We only publish on 2.12.x to keep in line with SBT, but it is assumed that
