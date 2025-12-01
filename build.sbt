@@ -89,11 +89,12 @@ lazy val publishSettings = List(
     false
   },
   publishTo := {
-    val nexus: String = "https://oss.sonatype.org/"
-    if (isSnapshot.value)
-      Some("snapshots" at nexus + "content/repositories/snapshots")
-    else
-      Some("releases" at nexus + "service/local/staging/deploy/maven2")
+    val centralSnapshots = "https://central.sonatype.com/repository/maven-snapshots/"
+    if (isSnapshot.value) {
+      Some("central-snapshots" at centralSnapshots)
+    } else {
+      localStaging.value
+    }
   },
   scmInfo := Some(ScmInfo(projectUrl, s"scm:git:git@github.com:isomarcte/${projectName}.git")),
   developers :=
