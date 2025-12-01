@@ -1,6 +1,5 @@
 package io.isomarcte.sbt.version.scheme.enforcer.core.vcs
 
-import cats.implicits._
 import cats.kernel.laws.discipline._
 import io.isomarcte.sbt.version.scheme.enforcer.core.vcs.OrphanTagInstances._
 import munit._
